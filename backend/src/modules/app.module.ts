@@ -1,8 +1,13 @@
+import { BullModule } from '@nestjs/bullmq';
 import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
 @Module({
   imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+    }),
     TypeOrmModule.forRoot({
       type: 'postgres',
       host: process.env.DB_HOST,
@@ -13,6 +18,12 @@ import { TypeOrmModule } from '@nestjs/typeorm';
       entities: [__dirname + '/../**/*.entity.{js,ts}'],
       autoLoadEntities: true,
       synchronize: true,
+    }),
+    BullModule.forRoot({
+      connection: {
+        host: process.env.REDIS_HOST,
+        port: Number(process.env.REDIS_PORT),
+      },
     }),
   ],
   controllers: [],
