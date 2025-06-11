@@ -1,22 +1,22 @@
 import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity()
-export class Lot {
+export class Machine {
     @PrimaryGeneratedColumn()
     id: number;
 
     @Column()
-    code: string;
+    machineId: number;
 
     @Column()
-    description: string;
+    lotId: number;
 
     @Column()
-    createdAt: Date;
+    timestamp: Date;
 
     @Column()
-    status: boolean;
+    dataType: string;
 
     @Column()
-    currentMachineId: number;
+    dataValue: string;
 }
