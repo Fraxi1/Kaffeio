@@ -2,7 +2,7 @@ import { BullModule } from '@nestjs/bullmq';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { QueueModule } from '../queues/queue.module';
+import { QueueModule } from './queue.module';
 import { UserModule } from './user.module';
 import { AuthModule } from './auth.module';
 

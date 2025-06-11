@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Inject, Optional } from '@nestjs/common';
 import { promises as fs } from 'fs';
 import { join } from 'path';
 import { OperationsQueueService } from './operations-queue.service';
@@ -18,8 +18,14 @@ export class FallbackQueueService {
   private readonly fallbackFilePath = join(process.cwd(), 'temp', 'fallback-queue.json');
   private isProcessing = false;
   private processingInterval: NodeJS.Timeout | null = null;
+  private operationsQueueService: OperationsQueueService | null = null;
 
-  constructor(private operationsQueueService: OperationsQueueService) {
+  constructor(@Optional() @Inject('OperationsQueueService') operationsService?: OperationsQueueService) {
+    // Store operations service if provided
+    if (operationsService) {
+      this.operationsQueueService = operationsService;
+    }
+
     // Create temp directory if it doesn't exist
     void this.ensureTempDirectoryExists();
     
@@ -85,6 +91,11 @@ export class FallbackQueueService {
       for (const job of jobs) {
         try {
           // Try to add the job to the operations queue
+          if (!this.operationsQueueService) {
+            this.logger.warn(`Cannot process job ${job.id}: OperationsQueueService not available`);
+            remainingJobs.push(job);
+            continue;
+          }
           await this.operationsQueueService.addJob(job.name, job.data);
           this.logger.log(`Successfully moved job ${job.id} from fallback to operations queue`);
         } catch (err) {
@@ -197,5 +208,14 @@ export class FallbackQueueService {
     } catch (error) {
       this.logger.error(`Failed to create temp directory: ${error.message}`, error.stack);
     }
+  }
+
+  /**
+   * Set the operations queue service
+   * This is used to avoid circular dependency issues
+   */
+  setOperationsQueueService(operationsService: OperationsQueueService): void {
+    this.operationsQueueService = operationsService;
+    this.logger.log('Operations queue service registered with fallback queue');
   }
 }
