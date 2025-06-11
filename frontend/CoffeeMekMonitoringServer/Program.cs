@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
+using CoffeeMekMonitoringServer.Extensions;
 using CoffeeMekMonitoringServer.Data;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -8,6 +9,11 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
 builder.Services.AddSingleton<WeatherForecastService>();
+
+// Aggiungi servizi CoffeeMek
+builder.Services.AddCoffeeMekServices(builder.Configuration);
+
+
 
 var app = builder.Build();
 

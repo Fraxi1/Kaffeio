@@ -1,0 +1,330 @@
+@page "/users"  
+@using CoffeeMekMonitoringServer.Pages.Components.Modals
+@inject IUserService UserService
+
+<PageTitle>Gestione Utenti - CoffeeMek</PageTitle>
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0">Gestione Utenti</h1>
+            <p class="text-muted">Amministra gli utenti del sistema CoffeeMek</p>
+        </div>
+        <button type="button" class="btn btn-primary" @onclick="ShowCreateModal">
+            <i class="fas fa-plus me-2"></i>Nuovo Utente
+        </button>
+    </div>
+
+    @if (!string.IsNullOrEmpty(_alertMessage))
+    {
+        <div class="alert @(_alertType == "success" ? "alert-success" : "alert-danger") alert-dismissible fade show">
+            <i class="fas @(_alertType == "success" ? "fa-check-circle" : "fa-exclamation-triangle") me-2"></i>
+            @_alertMessage
+            <button type="button" class="btn-close" @onclick="ClearAlert"></button>
+        </div>
+    }
+
+    @if (_isLoading)
+    {
+        <div class="d-flex justify-content-center align-items-center" style="min-height: 200px;">
+            <div class="text-center">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Caricamento...</span>
+                </div>
+                <p class="mt-2 text-muted">Caricamento utenti in corso...</p>
+            </div>
+        </div>
+    }
+    else if (_users?.Any() == true)
+    {
+        <div class="card shadow-sm">
+            <div class="card-header bg-white">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-end-0">
+                                <i class="fas fa-search text-muted"></i>
+                            </span>
+                            <input type="text" class="form-control border-start-0" 
+                                   placeholder="Cerca per nome, cognome o email..." 
+                                   @bind="_searchFilter" 
+                                   @bind:event="oninput" 
+                                   @onkeyup="ApplyFilter" />
+                            @if (!string.IsNullOrWhiteSpace(_searchFilter))
+                            {
+                                <button class="btn btn-outline-secondary" type="button" @onclick="ClearFilter">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            }
+                        </div>
+                    </div>
+                    <div class="col-md-6 text-end">
+                        <small class="text-muted">
+                            <i class="fas fa-users me-1"></i>
+                            Totale: @_filteredUsers.Count utenti
+                            @if (!string.IsNullOrWhiteSpace(_searchFilter))
+                            {
+                                <span> (filtrati da @_users.Count)</span>
+                            }
+                        </small>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th class="text-center">ID</th>
+                                <th>Nome</th>
+                                <th>Cognome</th>
+                                <th>Email</th>
+                                <th class="text-center">Azioni</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var user in _filteredUsers)
+                            {
+                                <tr>
+                                    <td class="text-center">@user.Id</td>
+                                    <td>@user.FirstName</td>
+                                    <td>@user.LastName</td>
+                                    <td>@user.Email</td>
+                                    <td class="text-center">
+                                        <div class="btn-group" role="group" aria-label="Azioni utente">
+                                            <button type="button" 
+                                                    class="btn btn-sm btn-outline-primary" 
+                                                    @onclick="() => ShowEditModal(user)" 
+                                                    title="Modifica utente"
+                                                    data-bs-toggle="tooltip">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button type="button" 
+                                                    class="btn btn-sm btn-outline-danger" 
+                                                    @onclick="() => ShowDeleteConfirmation(user)" 
+                                                    title="Elimina utente"
+                                                    data-bs-toggle="tooltip">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="text-center py-5">
+            <div class="mb-3">
+                <i class="fas fa-users fa-3x text-muted"></i>
+            </div>
+            <h4 class="text-muted">Nessun utente trovato</h4>
+            <p class="text-muted">Inizia creando il primo utente del sistema</p>
+            <button type="button" class="btn btn-primary" @onclick="ShowCreateModal">
+                <i class="fas fa-plus me-2"></i>Crea Primo Utente
+            </button>
+        </div>
+    }
+</div>
+
+<!-- Modal Utente -->
+<UserModal @ref="_userModal" OnUserSaved="HandleUserSaved" OnCancel="HandleModalCancel" />
+
+<!-- Modal Conferma Eliminazione -->
+@if (_showDeleteModal && _userToDelete != null)
+{
+    <div class="modal fade show" tabindex="-1" style="display: block;" aria-hidden="false">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Conferma Eliminazione</h5>
+                    <button type="button" class="btn-close" @onclick="CancelDelete"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="text-center">
+                        <i class="fas fa-exclamation-triangle fa-3x text-warning mb-3"></i>
+                        <h5>Sei sicuro di voler eliminare questo utente?</h5>
+                        <p class="text-muted">
+                            <strong>@_userToDelete.FullName</strong><br>
+                            <small>@_userToDelete.Email</small>
+                        </p>
+                        <div class="alert alert-warning">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Questa azione non può essere annullata.
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="CancelDelete" disabled="@_isDeletingUser">
+                        Annulla
+                    </button>
+                    <button type="button" class="btn btn-danger" @onclick="ConfirmDelete" disabled="@_isDeletingUser">
+                        @if (_isDeletingUser)
+                        {
+                            <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                        }
+                        Elimina Utente
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-backdrop fade show"></div>
+}
+
+@code {
+    private List<User> _users = new();
+    private List<User> _filteredUsers = new();
+    private string _searchFilter = string.Empty;
+    private bool _isLoading = true;
+    private string _alertMessage = string.Empty;
+    private string _alertType = string.Empty;
+    private UserModal _userModal = default!;
+    
+    private bool _showDeleteModal = false;
+    private User? _userToDelete = null;
+    private bool _isDeletingUser = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadUsers();
+    }
+
+    private async Task LoadUsers()
+    {
+        _isLoading = true;
+        try
+        {
+            var response = await UserService.GetAllUsersAsync();
+            if (response.Success && response.Data != null)
+            {
+                _users = response.Data;
+                ApplyFilter();
+            }
+            else
+            {
+                ShowAlert($"Errore nel caricamento degli utenti: {response.ErrorMessage}", "danger");
+                _users = new List<User>();
+                ApplyFilter();
+            }
+        }
+        catch (Exception ex)
+        {
+            ShowAlert($"Errore imprevisto: {ex.Message}", "danger");
+            _users = new List<User>();
+            ApplyFilter();
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private void ApplyFilter()
+    {
+        if (string.IsNullOrWhiteSpace(_searchFilter))
+        {
+            _filteredUsers = new List<User>(_users);
+        }
+        else
+        {
+            var filter = _searchFilter.ToLowerInvariant();
+            _filteredUsers = _users.Where(u => 
+                u.FirstName.ToLowerInvariant().Contains(filter) ||
+                u.LastName.ToLowerInvariant().Contains(filter) ||
+                u.Email.ToLowerInvariant().Contains(filter)
+            ).ToList();
+        }
+        StateHasChanged();
+    }
+
+    private void ClearFilter()
+    {
+        _searchFilter = string.Empty;
+        ApplyFilter();
+    }
+
+    private async Task ShowCreateModal()
+    {
+        ClearAlert();
+        await _userModal.ShowForCreateAsync();
+    }
+
+    private async Task ShowEditModal(User user)
+    {
+        ClearAlert();
+        await _userModal.ShowForEditAsync(user);
+    }
+
+    private void ShowDeleteConfirmation(User user)
+    {
+        ClearAlert();
+        _userToDelete = user;
+        _showDeleteModal = true;
+    }
+
+    private void CancelDelete()
+    {
+        _showDeleteModal = false;
+        _userToDelete = null;
+        _isDeletingUser = false;
+    }
+
+    private async Task ConfirmDelete()
+    {
+        if (_userToDelete == null) return;
+
+        _isDeletingUser = true;
+        try
+        {
+            var response = await UserService.DeleteUserAsync(_userToDelete.Id);
+            
+            if (response.Success)
+            {
+                ShowAlert($"Utente '{_userToDelete.FullName}' eliminato con successo", "success");
+                await LoadUsers();
+            }
+            else
+            {
+                ShowAlert($"Errore nell'eliminazione: {response.ErrorMessage}", "danger");
+            }
+        }
+        catch (Exception ex)
+        {
+            ShowAlert($"Errore imprevisto: {ex.Message}", "danger");
+        }
+        finally
+        {
+            _isDeletingUser = false;
+            CancelDelete();
+        }
+    }
+
+    private async Task HandleUserSaved(User savedUser)
+    {
+        ShowAlert($"Utente '{savedUser.FullName}' salvato con successo", "success");
+        await LoadUsers();
+    }
+
+    private void HandleModalCancel()
+    {
+        // Modal chiuso senza salvare
+    }
+
+    private void ShowAlert(string message, string type)
+    {
+        _alertMessage = message;
+        _alertType = type;
+    }
+
+    private void ClearAlert()
+    {
+        _alertMessage = string.Empty;
+        _alertType = string.Empty;
+    }
+}
