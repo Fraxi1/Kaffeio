@@ -120,14 +120,15 @@
         try
         {
             var result = await AuthenticationService.LoginAsync(loginModel.Email, loginModel.Password);
-            
+        
             if (result.IsSuccess && result.Data != null)
             {
+                // CAMBIATO: Redirect sempre alla home page
                 NavigationManager.NavigateTo("/", forceLoad: true);
             }
             else
             {
-                errorMessage = result.ErrorMessage ?? "Credenziali non valide. Riprova.";
+                errorMessage = result.ErrorMessage ?? "Credenziali non valide. Verifica email e password.";
             }
         }
         catch (Exception ex)
