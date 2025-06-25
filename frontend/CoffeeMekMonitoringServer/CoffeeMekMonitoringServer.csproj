@@ -18,4 +18,8 @@
     <AdditionalFiles Include="Pages\Components\Modals\UserModal.razor" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile Remove="Services\Token\ITokenService.cs" />
+  </ItemGroup>
+
 </Project>

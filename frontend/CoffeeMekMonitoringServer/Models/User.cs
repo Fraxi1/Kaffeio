@@ -6,15 +6,13 @@ namespace CoffeeMekMonitoringServer.Models;
 public class User
 {
     [JsonPropertyName("id")]
-    public int Id { get; set; }
+    public int? Id { get; set; } // CAMBIATO: int invece di string
 
     [Required(ErrorMessage = "Il nome è obbligatorio")]
-    [StringLength(50, ErrorMessage = "Il nome non può superare 50 caratteri")]
     [JsonPropertyName("firstName")]
     public string FirstName { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "Il cognome è obbligatorio")]
-    [StringLength(50, ErrorMessage = "Il cognome non può superare 50 caratteri")]
     [JsonPropertyName("lastName")]
     public string LastName { get; set; } = string.Empty;
 
@@ -26,6 +24,12 @@ public class User
     [JsonPropertyName("password")]
     public string Password { get; set; } = string.Empty;
 
+    [JsonPropertyName("createdAt")]
+    public string? CreatedAt { get; set; }
+
+    [JsonPropertyName("updatedAt")]
+    public string? UpdatedAt { get; set; }
+
     [JsonIgnore]
-    public string FullName => $"{FirstName} {LastName}";
+    public string FullName => $"{FirstName} {LastName}".Trim();
 }

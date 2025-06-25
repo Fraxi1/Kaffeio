@@ -126,7 +126,7 @@
 
             if (_isEditMode)
             {
-                response = await UserService.UpdateUserAsync(_formModel.Id, _formModel);
+                response = await UserService.UpdateUserAsync(_formModel.Id??0, _formModel);
             }
             else
             {

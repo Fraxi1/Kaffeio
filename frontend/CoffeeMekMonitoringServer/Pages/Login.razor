@@ -1,0 +1,153 @@
+@page "/login"
+@layout LoginLayout
+@using System.ComponentModel.DataAnnotations
+@using CoffeeMekMonitoringServer.Models
+@using CoffeeMekMonitoringServer.Services.Interfaces
+@inject IAuthenticationService AuthenticationService
+@inject NavigationManager NavigationManager
+@attribute [AllowAnonymous]
+<div class="row h-100 justify-content-center align-items-center">
+    <div class="col-md-6 col-lg-4">
+        <div class="card shadow">
+            <div class="card-body p-4">
+                <div class="text-center mb-4">
+                    <h3 class="card-title">
+                        <i class="fas fa-coffee text-primary me-2"></i>
+                        CoffeeMek
+                    </h3>
+                    <p class="text-muted">Accedi al sistema di monitoraggio</p>
+                </div>
+
+                <EditForm Model="@loginModel" OnValidSubmit="@HandleLogin">
+                    <DataAnnotationsValidator />
+                    
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email</label>
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i class="fas fa-envelope"></i>
+                            </span>
+                            <InputText id="email" 
+                                      class="form-control" 
+                                      @bind-Value="loginModel.Email" 
+                                      placeholder="inserisci la tua email"
+                                      disabled="@isLoading" />
+                        </div>
+                        <ValidationMessage For="@(() => loginModel.Email)" class="text-danger small" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Password</label>
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i class="fas fa-lock"></i>
+                            </span>
+                            <InputText id="password" 
+                                      type="password" 
+                                      class="form-control" 
+                                      @bind-Value="loginModel.Password" 
+                                      placeholder="inserisci la tua password"
+                                      disabled="@isLoading" />
+                        </div>
+                        <ValidationMessage For="@(() => loginModel.Password)" class="text-danger small" />
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(errorMessage))
+                    {
+                        <div class="alert alert-danger d-flex align-items-center" role="alert">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            <div>@errorMessage</div>
+                        </div>
+                    }
+
+                    <div class="d-grid">
+                        <button type="submit" 
+                                class="btn btn-primary btn-lg" 
+                                disabled="@isLoading">
+                            @if (isLoading)
+                            {
+                                <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                <span>Accesso in corso...</span>
+                            }
+                            else
+                            {
+                                <i class="fas fa-sign-in-alt me-2"></i>
+                                <span>Accedi</span>
+                            }
+                        </button>
+                    </div>
+                </EditForm>
+
+                @if (Configuration.GetValue<bool>("UseFakes"))
+                {
+                    <div class="text-center mt-3">
+                        <small class="text-muted">
+                            <strong>Modalità Demo:</strong><br/>
+                            Credenziali di test: test.user@example.com / ciao123!
+                        </small>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Inject] private IConfiguration Configuration { get; set; } = default!;
+
+    private LoginModel loginModel = new() 
+    { 
+        Email = "test.user@example.com", 
+        Password = "ciao123!" 
+    };
+    private string errorMessage = string.Empty;
+    private bool isLoading = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (await AuthenticationService.IsAuthenticatedAsync())
+        {
+            NavigationManager.NavigateTo("/");
+        }
+    }
+
+    private async Task HandleLogin()
+    {
+        isLoading = true;
+        errorMessage = string.Empty;
+        StateHasChanged();
+
+        try
+        {
+            var result = await AuthenticationService.LoginAsync(loginModel.Email, loginModel.Password);
+            
+            if (result.IsSuccess && result.Data != null)
+            {
+                NavigationManager.NavigateTo("/", forceLoad: true);
+            }
+            else
+            {
+                errorMessage = result.ErrorMessage ?? "Credenziali non valide. Riprova.";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Errore durante il login: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    public class LoginModel
+    {
+        [Required(ErrorMessage = "L'email è obbligatoria")]
+        [EmailAddress(ErrorMessage = "Formato email non valido")]
+        public string Email { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "La password è obbligatoria")]
+        public string Password { get; set; } = string.Empty;
+    }
+}
