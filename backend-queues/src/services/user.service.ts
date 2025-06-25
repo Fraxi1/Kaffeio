@@ -7,7 +7,8 @@ import { Injectable, NotFoundException, ConflictException, BadRequestException }
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User, CreateUserDto, UpdateUserDto } from '../schema/entities/user.entity';
-
+import { DatabaseQueueService } from '../queues/database-queue.service';
+import { OperationsQueueService } from '../queues/operations-queue.service';
 import * as bcrypt from 'bcrypt';
 
 @Injectable()
@@ -15,7 +16,8 @@ export class UserService {
     constructor(
         @InjectRepository(User)
         private userRepository: Repository<User>,
-
+        private databaseQueueService: DatabaseQueueService,
+        private operationsQueueService: OperationsQueueService
     ) { }
 
     /**
@@ -48,7 +50,11 @@ export class UserService {
         // Save user to database
         const savedUser = await this.userRepository.save(newUser);
 
-        // Queue functionality removed
+        // Add job to database queue for analytics or other processing
+        await this.databaseQueueService.addJob('user-created', {
+            userId: savedUser.id,
+            timestamp: new Date().toISOString()
+        });
 
         // Return user without password, excluding sensitive data
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -65,7 +71,8 @@ export class UserService {
      * @returns List of all users
      */
     async getAllUsers(): Promise<User[]> {
-        // Queue functionality removed
+        // Add to database queue for analytics
+        await this.databaseQueueService.addJob('get-all-users', {});
 
         // Get users directly
         return this.userRepository.find({
@@ -84,7 +91,8 @@ export class UserService {
             throw new BadRequestException('Invalid user ID');
         }
 
-        // Queue functionality removed
+        // Add to database queue for analytics
+        await this.databaseQueueService.addJob('get-user-by-id', { id: userId });
 
         // Get user directly
         const user = await this.userRepository.findOne({
@@ -181,7 +189,17 @@ export class UserService {
         // Delete user
         await this.userRepository.delete(userId);
 
-        // Queue functionality removed
+        // Add job to database queue
+        await this.databaseQueueService.addJob('user-deleted', {
+            userId,
+            timestamp: new Date().toISOString()
+        });
+
+        // Add job to operations queue for cleanup
+        await this.operationsQueueService.addJob('cleanup-user-data', {
+            userId,
+            timestamp: new Date().toISOString()
+        });
 
         return { message: `User with ID ${id} has been deleted` };
     }

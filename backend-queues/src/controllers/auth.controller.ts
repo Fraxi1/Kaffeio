@@ -47,8 +47,15 @@ export class AuthController {
                 throw new ConflictException('Email already in use');
             }
 
-            // Create new user with password (will be hashed in userService)
-            const newUser = await this.userService.createUser(createUserDto);
+            // Hash the password
+            const salt = await bcrypt.genSalt();
+            const hashedPassword = await bcrypt.hash(createUserDto.password, salt);
+
+            // Create new user with hashed password
+            const newUser = await this.userService.createUser({
+                ...createUserDto,
+                password: hashedPassword
+            });
 
             // Return user without password
             const { password, ...result } = newUser;

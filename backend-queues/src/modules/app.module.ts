@@ -1,14 +1,10 @@
-
+import { BullModule } from '@nestjs/bullmq';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-
+import { QueueModule } from './queue.module';
 import { UserModule } from './user.module';
 import { AuthModule } from './auth.module';
-import { FacilityModule } from './facility.module';
-import { LotModule } from './lot.module';
-import { MachineModule } from './machine.module';
-import { TelemetryModule } from './telemetry.module';
 
 @Module({
   imports: [
@@ -26,14 +22,15 @@ import { TelemetryModule } from './telemetry.module';
       autoLoadEntities: true,
       synchronize: true,
     }),
-
-
+    BullModule.forRoot({
+      connection: {
+        host: process.env.REDIS_HOST,
+        port: Number(process.env.REDIS_PORT),
+      },
+    }),
+    QueueModule,
     UserModule,
-    AuthModule,
-    FacilityModule,
-    LotModule,
-    MachineModule,
-    TelemetryModule
+    AuthModule
   ],
   controllers: [],
   providers: [],
