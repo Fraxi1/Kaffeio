@@ -1,4 +1,6 @@
-﻿<CascadingAuthenticationState>
+﻿@using CoffeeMekMonitoringServer.Pages.Components
+<CascadingAuthenticationState>
+    <AutoLoginRedirect />
     <Router AppAssembly="@typeof(App).Assembly">
         <Found Context="routeData">
             <AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(Shared.MainLayout)">

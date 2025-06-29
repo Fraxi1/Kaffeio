@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace CoffeeMekMonitoringServer.Models;
 
 public class ApiResponse<T>
@@ -28,5 +30,29 @@ public class ApiResponse<T>
             ErrorMessage = errorMessage,
             StatusCode = statusCode
         };
+    }
+    
+    /// <summary>
+    /// Wrapper per le risposte API reali secondo la struttura CoffeeMek
+    /// </summary>
+    public class ApiResponseWrapper<T>
+    {
+        [JsonPropertyName("success")]
+        public bool Success { get; set; }
+    
+        [JsonPropertyName("data")]
+        public T Data { get; set; } = default!;
+    
+        [JsonPropertyName("timestamp")]
+        public DateTime Timestamp { get; set; }
+    
+        [JsonPropertyName("path")]
+        public string Path { get; set; } = string.Empty;
+    
+        [JsonPropertyName("message")]
+        public string? Message { get; set; }
+    
+        [JsonPropertyName("error")]
+        public string? Error { get; set; }
     }
 }

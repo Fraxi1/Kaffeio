@@ -34,7 +34,6 @@ builder.Services.AddSingleton<ITokenService, BlazorTokenService>();
 builder.Services.AddScoped<CustomAuthenticationStateProvider>();
 builder.Services.AddScoped<Microsoft.AspNetCore.Components.Authorization.AuthenticationStateProvider>(
     provider => provider.GetService<CustomAuthenticationStateProvider>()!);
-builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
 
 // Determina se usare servizi fake o reali
 var useFakes = builder.Configuration.GetValue<bool>("UseFakes", true);
@@ -42,6 +41,8 @@ var useFakes = builder.Configuration.GetValue<bool>("UseFakes", true);
 // Registrazione servizi API
 if (useFakes)
 {
+    builder.Services.AddScoped<IAuthenticationService, AutoLoginService>();
+
     // Servizi fake per testing
     builder.Services.AddScoped<IUserService, FakeUserApiClient>();
     builder.Services.AddScoped<ILotService, FakeLotApiClient>();
@@ -56,6 +57,8 @@ if (useFakes)
 }
 else
 {
+    builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
+
     // Servizi reali per API Kaffeio
     builder.Services.AddScoped<IUserService, UserApiClient>();
     builder.Services.AddScoped<ILotService, LotApiClient>();
@@ -63,7 +66,7 @@ else
     builder.Services.AddScoped<IFacilityService, FacilityApiClient>();
     
     // AGGIUNTI: Nuovi servizi reali per produzione
-    // builder.Services.AddScoped<ICustomerService, CustomerApiClient>();
+     builder.Services.AddScoped<ICustomerService, CustomerApiClient>();
     // builder.Services.AddScoped<IOrderService, OrderApiClient>();
     // builder.Services.AddScoped<IProductionScheduleService, ProductionScheduleApiClient>();
     // builder.Services.AddScoped<ITelemetryService, TelemetryApiClient>();

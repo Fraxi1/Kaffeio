@@ -11,7 +11,7 @@
 <PageTitle>Gestione Commesse - CoffeeMek S.p.A.</PageTitle>
 
 <div class="container-fluid py-4">
-    <!-- Header Section -->
+    <!-- Header CoffeeMek Branding -->
     <div class="row mb-4">
         <div class="col">
             <div class="d-flex align-items-center justify-content-between">
@@ -20,7 +20,10 @@
                         <i class="fas fa-clipboard-list text-primary me-3"></i>
                         Gestione Commesse CoffeeMek S.p.A.
                     </h2>
-                    <p class="text-muted mb-0">Ordini e commesse per macchine da caffè professionali - Multi-sede Cloud</p>
+                    <p class="text-muted mb-0">
+                        <i class="fas fa-coffee me-2"></i>
+                        Sistema Cloud - Produzione Macchine da Caffè Professionali
+                    </p>
                 </div>
                 <div class="d-flex gap-2">
                     <a href="/" class="btn btn-outline-primary">
@@ -31,30 +34,30 @@
                         <i class="fas fa-plus me-2"></i>
                         Nuova Commessa
                     </button>
-                    <button class="btn btn-outline-secondary" @onclick="@(() => LoadOrders())">
+                    <button class="btn btn-outline-secondary" @onclick="LoadOrders">
                         <i class="fas fa-sync-alt me-2"></i>
-                        Aggiorna
+                        Aggiorna Cloud
                     </button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Filtri Cloud Multi-Sede -->
+    <!-- Multi-Site Filters -->
     <div class="row mb-4">
         <div class="col-12">
             <div class="card border-0 shadow-sm">
-                <div class="card-header bg-primary text-white border-0">
+                <div class="card-header bg-gradient-primary text-white border-0">
                     <h6 class="mb-0">
                         <i class="fas fa-filter me-2"></i>
-                        Filtri Multi-Sede CoffeeMek (Italia • Brasile • Vietnam)
+                        Filtri Multi-Sede CoffeeMek: 🇮🇹 Italia • 🇧🇷 Brasile • 🇻🇳 Vietnam
                     </h6>
                 </div>
                 <div class="card-body">
                     <div class="row align-items-end">
                         <div class="col-md-3">
                             <label class="form-label">Stato Commessa:</label>
-                            <InputSelect class="form-select" @bind-Value="selectedStatus" @bind-Value:after="@(() => ApplyFilters())">
+                            <InputSelect class="form-select" @bind-Value="selectedStatus" @bind-Value:after="ApplyFilters">
                                 <option value="">Tutti gli stati</option>
                                 <option value="Pending">📋 In Attesa</option>
                                 <option value="InProgress">⚡ In Corso</option>
@@ -64,7 +67,7 @@
                         </div>
                         <div class="col-md-3">
                             <label class="form-label">Priorità Produzione:</label>
-                            <InputSelect class="form-select" @bind-Value="selectedPriority" @bind-Value:after="@(() => ApplyFilters())">
+                            <InputSelect class="form-select" @bind-Value="selectedPriority" @bind-Value:after="ApplyFilters">
                                 <option value="">Tutte le priorità</option>
                                 <option value="Low">🟢 Bassa</option>
                                 <option value="Medium">🟡 Media</option>
@@ -73,12 +76,12 @@
                             </InputSelect>
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label">Cerca per numero ordine o cliente:</label>
-                            <InputText class="form-control" @bind-Value="searchTerm" @bind-Value:after="@(() => ApplyFilters())" 
-                                      placeholder="Inserisci numero ordine o nome cliente..." />
+                            <label class="form-label">Ricerca Globale:</label>
+                            <InputText class="form-control" @bind-Value="searchTerm" @bind-Value:after="ApplyFilters" 
+                                      placeholder="Numero ordine, cliente, paese..." />
                         </div>
                         <div class="col-md-2">
-                            <button class="btn btn-outline-secondary w-100" @onclick="@(() => ClearFilters())">
+                            <button class="btn btn-outline-secondary w-100" @onclick="ClearFilters">
                                 <i class="fas fa-times me-2"></i>
                                 Reset
                             </button>
@@ -89,30 +92,30 @@
         </div>
     </div>
 
-    <!-- Breadcrumb -->
+    <!-- Workflow Info -->
     <div class="row mb-3">
-        <div class="col">
-            <nav aria-label="breadcrumb">
-                <ol class="breadcrumb">
-                    <li class="breadcrumb-item">
-                        <a href="/" class="text-decoration-none">
-                            <i class="fas fa-home me-1"></i>
-                            Dashboard
-                        </a>
-                    </li>
-                    <li class="breadcrumb-item">
-                        <span class="text-muted">Business</span>
-                    </li>
-                    <li class="breadcrumb-item active" aria-current="page">
-                        <i class="fas fa-clipboard-list me-1"></i>
-                        Commesse
-                    </li>
-                </ol>
-            </nav>
+        <div class="col-12">
+            <div class="alert alert-info border-0 shadow-sm" role="alert">
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-info-circle fa-2x me-3"></i>
+                    <div>
+                        <strong>Workflow Produzione CoffeeMek:</strong>
+                        <div class="d-flex align-items-center mt-1">
+                            <span class="badge bg-primary me-2">🔧 Fresa CNC</span>
+                            <i class="fas fa-arrow-right text-muted me-2"></i>
+                            <span class="badge bg-success me-2">⚙️ Tornio</span>
+                            <i class="fas fa-arrow-right text-muted me-2"></i>
+                            <span class="badge bg-warning me-2">🔩 Assemblaggio</span>
+                            <i class="fas fa-arrow-right text-muted me-2"></i>
+                            <span class="badge bg-info">🧪 Test</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
-    <!-- Loading State -->
+    <!-- Loading/Error/Data States -->
     @if (isLoading)
     {
         <div class="row">
@@ -122,14 +125,16 @@
                         <div class="spinner-border text-primary mb-3" role="status">
                             <span class="visually-hidden">Caricamento...</span>
                         </div>
-                        <h5 class="text-muted">Caricamento commesse CoffeeMek in corso...</h5>
-                        <p class="text-muted mb-0">Cloud Platform - Microsoft Azure</p>
+                        <h5 class="text-muted">Caricamento commesse CoffeeMek dal cloud...</h5>
+                        <p class="text-muted mb-0">
+                            <i class="fas fa-cloud me-2"></i>
+                            Microsoft Azure Platform
+                        </p>
                     </div>
                 </div>
             </div>
         </div>
     }
-    <!-- Error State -->
     else if (!string.IsNullOrEmpty(errorMessage))
     {
         <div class="row">
@@ -138,12 +143,12 @@
                     <div class="d-flex align-items-center">
                         <i class="fas fa-exclamation-triangle fa-2x me-3"></i>
                         <div class="flex-grow-1">
-                            <h5 class="alert-heading mb-1">Errore nel caricamento commesse</h5>
+                            <h5 class="alert-heading mb-1">Errore Sistema Cloud CoffeeMek</h5>
                             <p class="mb-2">@errorMessage</p>
                             <div class="d-flex gap-2">
-                                <button class="btn btn-outline-danger btn-sm" @onclick="@(() => LoadOrders())">
+                                <button class="btn btn-outline-danger btn-sm" @onclick="LoadOrders">
                                     <i class="fas fa-redo me-2"></i>
-                                    Riprova
+                                    Riprova Connessione
                                 </button>
                                 <a href="/" class="btn btn-outline-secondary btn-sm">
                                     <i class="fas fa-home me-2"></i>
@@ -156,10 +161,9 @@
             </div>
         </div>
     }
-    <!-- Orders List -->
     else if (filteredOrders.Any())
     {
-        <!-- Summary Statistics Multi-Sede -->
+        <!-- Statistics Dashboard -->
         <div class="row mb-4">
             <div class="col-12">
                 <div class="card border-0 shadow-sm">
@@ -175,23 +179,51 @@
                                 <div class="border-end">
                                     <h4 class="text-warning mb-1">@GetStatusCount("Pending")</h4>
                                     <small class="text-muted">📋 In Attesa</small>
+                                    <div class="progress mt-2" style="height: 4px;">
+                                        <div class="progress-bar bg-warning" style="width: @GetStatusPercentage("Pending")%"></div>
+                                    </div>
                                 </div>
                             </div>
                             <div class="col-md-3">
                                 <div class="border-end">
                                     <h4 class="text-primary mb-1">@GetStatusCount("InProgress")</h4>
                                     <small class="text-muted">⚡ In Produzione</small>
+                                    <div class="progress mt-2" style="height: 4px;">
+                                        <div class="progress-bar bg-primary" style="width: @GetStatusPercentage("InProgress")%"></div>
+                                    </div>
                                 </div>
                             </div>
                             <div class="col-md-3">
                                 <div class="border-end">
                                     <h4 class="text-success mb-1">@GetStatusCount("Completed")</h4>
                                     <small class="text-muted">✅ Completate</small>
+                                    <div class="progress mt-2" style="height: 4px;">
+                                        <div class="progress-bar bg-success" style="width: @GetStatusPercentage("Completed")%"></div>
+                                    </div>
                                 </div>
                             </div>
                             <div class="col-md-3">
                                 <h4 class="text-danger mb-1">@GetStatusCount("Cancelled")</h4>
                                 <small class="text-muted">❌ Annullate</small>
+                                <div class="progress mt-2" style="height: 4px;">
+                                    <div class="progress-bar bg-danger" style="width: @GetStatusPercentage("Cancelled")%"></div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Summary Info -->
+                        <div class="row mt-3 pt-3 border-top">
+                            <div class="col-md-4 text-center">
+                                <strong class="text-primary">@GetTotalQuantity()</strong>
+                                <small class="text-muted d-block">Macchine Totali</small>
+                            </div>
+                            <div class="col-md-4 text-center">
+                                <strong class="text-success">@GetActiveCustomers()</strong>
+                                <small class="text-muted d-block">Clienti Attivi</small>
+                            </div>
+                            <div class="col-md-4 text-center">
+                                <strong class="text-info">@GetActiveFacilities()</strong>
+                                <small class="text-muted d-block">Sedi Coinvolte</small>
                             </div>
                         </div>
                     </div>
@@ -223,7 +255,7 @@
                             </div>
                         </div>
                         <div class="card-body">
-                            <!-- Cliente con Bandiera Nazionale -->
+                            <!-- Cliente Globale -->
                             <div class="mb-3">
                                 <small class="text-muted d-block mb-1">
                                     <i class="fas fa-building me-2"></i>
@@ -235,18 +267,21 @@
                                 @if (!string.IsNullOrEmpty(order.Customer?.Email))
                                 {
                                     <br>
-                                    <small class="text-muted">@order.Customer.Email</small>
+                                    <small class="text-muted">
+                                        <i class="fas fa-envelope me-1"></i>
+                                        @order.Customer.Email
+                                    </small>
                                 }
                             </div>
 
-                            <!-- Quantità e Sede Produttiva -->
+                            <!-- Quantità e Sede -->
                             <div class="row mb-3">
                                 <div class="col-6">
                                     <small class="text-muted d-block mb-1">
                                         <i class="fas fa-calculator me-2"></i>
-                                        Quantità Macchine:
+                                        Quantità:
                                     </small>
-                                    <span class="fw-bold text-primary">@order.Quantity pz</span>
+                                    <span class="fw-bold text-primary">@order.Quantity macchine</span>
                                 </div>
                                 <div class="col-6">
                                     <small class="text-muted d-block mb-1">
@@ -254,39 +289,46 @@
                                         Sede Produttiva:
                                     </small>
                                     <span class="fw-bold">
-                                        @GetFacilityFlag(order.Facility?.Location) @(order.Facility?.Name ?? "N/A")
+                                        @GetFacilityFlag(order.Facility?.Location) @GetShortFacilityName(order.Facility?.Name)
                                     </span>
                                 </div>
                             </div>
 
-                            <!-- Workflow Produzione CoffeeMek -->
-                            <div class="mb-3">
-                                <small class="text-muted d-block mb-1">
-                                    <i class="fas fa-cogs me-2"></i>
-                                    Workflow CoffeeMek:
-                                </small>
-                                <div class="d-flex align-items-center">
-                                    <i class="fas fa-cog text-primary me-1" title="Fresa CNC"></i>
-                                    <i class="fas fa-arrow-right text-muted me-1"></i>
-                                    <i class="fas fa-circle-notch text-success me-1" title="Tornio"></i>
-                                    <i class="fas fa-arrow-right text-muted me-1"></i>
-                                    <i class="fas fa-puzzle-piece text-warning me-1" title="Assemblaggio"></i>
-                                    <i class="fas fa-arrow-right text-muted me-1"></i>
-                                    <i class="fas fa-vial text-info" title="Test"></i>
+                            <!-- Lotti di Produzione -->
+                            @if (order.Lots != null && order.Lots.Any())
+                            {
+                                <div class="mb-3">
+                                    <small class="text-muted d-block mb-1">
+                                        <i class="fas fa-boxes me-2"></i>
+                                        Lotti di Produzione:
+                                    </small>
+                                    <div class="d-flex flex-wrap gap-1">
+                                        @foreach (var lot in order.Lots.Take(3))
+                                        {
+                                            <span class="badge bg-@GetLotStatusColor(lot.Status) small">
+                                                @lot.Code (@lot.Progress%)
+                                            </span>
+                                        }
+                                        @if (order.Lots.Count > 3)
+                                        {
+                                            <span class="badge bg-secondary small">+@(order.Lots.Count - 3) altri</span>
+                                        }
+                                    </div>
                                 </div>
-                                <small class="text-muted">Fresa CNC → Tornio → Assemblaggio → Test</small>
-                            </div>
+                            }
 
-                            <!-- Descrizione Prodotto -->
+                            <!-- Descrizione -->
                             <div class="mb-3">
                                 <small class="text-muted d-block mb-1">
                                     <i class="fas fa-coffee me-2"></i>
                                     Prodotto CoffeeMek:
                                 </small>
-                                <p class="mb-0 small text-wrap">@(order.Description ?? "Macchine da caffè professionali")</p>
+                                <p class="mb-0 small text-wrap">
+                                    @(order.Description ?? order.Notes ?? "Macchine da caffè professionali CoffeeMek")
+                                </p>
                             </div>
 
-                            <!-- Timeline con Fusi Orari -->
+                            <!-- Timeline -->
                             <div class="row">
                                 <div class="col-6">
                                     <small class="text-muted d-block mb-1">
@@ -303,7 +345,7 @@
                                     <span class="fw-bold text-@(IsOverdue(order.DeliveryDate) ? "danger" : "success")">
                                         @FormatDate(order.DeliveryDate)
                                     </span>
-                                    @if (IsOverdue(order.DeliveryDate))
+                                    @if (IsOverdue(order.DeliveryDate) && order.Status != "Completed")
                                     {
                                         <br><small class="text-danger">⚠️ In ritardo</small>
                                     }
@@ -312,15 +354,15 @@
                         </div>
                         <div class="card-footer bg-light border-0">
                             <div class="d-flex justify-content-between">
-                                <button class="btn btn-outline-info btn-sm" @onclick="@(() => ViewOrderDetails(order.Id))">
+                                <button class="btn btn-outline-info btn-sm" @onclick="@(() => ViewOrderProduction(order.Id))">
                                     <i class="fas fa-chart-line me-1"></i>
                                     Produzione
                                 </button>
                                 <div class="btn-group btn-group-sm">
-                                    <button class="btn btn-outline-primary" @onclick="@(() => EditOrder(order.Id))" title="Modifica">
+                                    <button class="btn btn-outline-primary" @onclick="@(() => EditOrder(order.Id))" title="Modifica Commessa">
                                         <i class="fas fa-edit"></i>
                                     </button>
-                                    <button class="btn btn-outline-danger" @onclick="@(() => DeleteOrder(order.Id, order.OrderNumber))" title="Elimina">
+                                    <button class="btn btn-outline-danger" @onclick="@(() => DeleteOrder(order.Id, order.OrderNumber))" title="Elimina Commessa">
                                         <i class="fas fa-trash"></i>
                                     </button>
                                 </div>
@@ -331,9 +373,9 @@
             }
         </div>
     }
-    <!-- Empty State -->
     else
     {
+        <!-- Empty State -->
         <div class="row">
             <div class="col-12">
                 <div class="card border-0 shadow-sm">
@@ -343,30 +385,27 @@
                         </div>
                         <h4 class="text-muted mb-3">Nessuna commessa CoffeeMek trovata</h4>
                         <p class="text-muted mb-4">
-                            @if (!string.IsNullOrEmpty(searchTerm) || !string.IsNullOrEmpty(selectedStatus) || !string.IsNullOrEmpty(selectedPriority))
+                            @if (HasActiveFilters())
                             {
-                                <span>Nessuna commessa corrisponde ai filtri selezionati per le sedi CoffeeMek.</span>
+                                <span>Nessuna commessa corrisponde ai filtri selezionati per il sistema cloud CoffeeMek.</span>
                             }
                             else
                             {
-                                <span>Non ci sono commesse di produzione nel sistema cloud CoffeeMek.</span>
+                                <span>Non ci sono commesse di produzione nel sistema cloud CoffeeMek multi-sede.</span>
                             }
                         </p>
                         <div class="d-flex justify-content-center gap-2">
-                            @if (!string.IsNullOrEmpty(searchTerm) || !string.IsNullOrEmpty(selectedStatus) || !string.IsNullOrEmpty(selectedPriority))
+                            @if (HasActiveFilters())
                             {
-                                <button class="btn btn-outline-primary" @onclick="@(() => ClearFilters())">
+                                <button class="btn btn-outline-primary" @onclick="ClearFilters">
                                     <i class="fas fa-times me-2"></i>
                                     Rimuovi Filtri
                                 </button>
                             }
-                            else
-                            {
-                                <button class="btn btn-success" @onclick="ShowCreateModal">
-                                    <i class="fas fa-plus me-2"></i>
-                                    Nuova Commessa
-                                </button>
-                            }
+                            <button class="btn btn-success" @onclick="ShowCreateModal">
+                                <i class="fas fa-plus me-2"></i>
+                                Nuova Commessa
+                            </button>
                             <a href="/" class="btn btn-outline-secondary">
                                 <i class="fas fa-home me-2"></i>
                                 Torna alla Dashboard
@@ -379,13 +418,13 @@
     }
 </div>
 
-<!-- Modal per Creazione/Modifica Commesse CoffeeMek -->
+<!-- Modal Creazione/Modifica -->
 @if (showModal)
 {
     <div class="modal show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
-                <div class="modal-header bg-primary text-white">
+                <div class="modal-header bg-gradient-primary text-white">
                     <h5 class="modal-title">
                         <i class="fas fa-@(isEditMode ? "edit" : "plus") me-2"></i>
                         @(isEditMode ? "Modifica Commessa CoffeeMek" : "Nuova Commessa CoffeeMek")
@@ -393,9 +432,10 @@
                     <button type="button" class="btn-close btn-close-white" @onclick="HideModal"></button>
                 </div>
                 <div class="modal-body">
-                    <EditForm Model="@modalOrder" OnValidSubmit="@SaveOrder">
+                    <EditForm Model="@modalOrder" OnValidSubmit="SaveOrder">
                         <DataAnnotationsValidator />
                         
+                        <!-- Customer e Facility -->
                         <div class="row mb-3">
                             <div class="col-md-6">
                                 <label class="form-label">Cliente Globale *</label>
@@ -411,7 +451,7 @@
                             <div class="col-md-6">
                                 <label class="form-label">Sede Produttiva CoffeeMek *</label>
                                 <InputSelect class="form-select" @bind-Value="modalOrder.FacilityId">
-                                    <option value="0">Seleziona sede produttiva...</option>
+                                    <option value="0">Seleziona sede...</option>
                                     @foreach (var facility in facilities)
                                     {
                                         <option value="@facility.Id">@GetFacilityFlag(facility.Location) @facility.Name</option>
@@ -421,10 +461,11 @@
                             </div>
                         </div>
 
+                        <!-- Quantity, Priority, Status -->
                         <div class="row mb-3">
                             <div class="col-md-4">
                                 <label class="form-label">Quantità Macchine *</label>
-                                <InputNumber class="form-control" @bind-Value="modalOrder.Quantity" placeholder="Es. 50" />
+                                <InputNumber class="form-control" @bind-Value="modalOrder.Quantity" min="1" max="1000" />
                                 <small class="text-muted">Numero di macchine da caffè da produrre</small>
                                 <ValidationMessage For="@(() => modalOrder.Quantity)" class="text-danger small" />
                             </div>
@@ -448,29 +489,32 @@
                             </div>
                         </div>
 
-                        <!-- Workflow CoffeeMek Info -->
+                        <!-- Data Consegna -->
+                        <div class="mb-3">
+                            <label class="form-label">Data Consegna Richiesta</label>
+                            <InputDate class="form-control" @bind-Value="deliveryDateInput" />
+                            <small class="text-muted">La data sarà coordinata con il fuso orario della sede produttiva</small>
+                        </div>
+
+                        <!-- Descrizione -->
+                        <div class="mb-3">
+                            <label class="form-label">Descrizione Commessa</label>
+                            <InputTextArea class="form-control" @bind-Value="modalOrder.Description" rows="4" 
+                                          placeholder="Es. Macchine espresso professionali - Serie Premium per catena hotel. Include sistema automatico pulizia, controllo temperatura avanzato, interfaccia touch screen..." />
+                        </div>
+
+                        <!-- Workflow Info -->
                         <div class="alert alert-info border-0 mb-3">
                             <div class="d-flex align-items-center">
                                 <i class="fas fa-info-circle me-2"></i>
                                 <div>
-                                    <strong>Workflow Produzione CoffeeMek:</strong><br>
-                                    <small>Ogni macchina passerà attraverso: Fresa CNC → Tornio → Assemblaggio → Test</small>
+                                    <strong>Workflow Automatico CoffeeMek:</strong><br>
+                                    <small>Ogni macchina seguirà automaticamente il flusso: Fresa CNC → Tornio → Assemblaggio → Test Qualità</small>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="mb-3">
-                            <label class="form-label">Data Consegna Richiesta</label>
-                            <InputDate class="form-control" @bind-Value="deliveryDateInput" />
-                            <small class="text-muted">La data sarà sincronizzata con il fuso orario della sede produttiva</small>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label">Descrizione Commessa</label>
-                            <InputTextArea class="form-control" @bind-Value="modalOrder.Description" rows="4" 
-                                          placeholder="Es. Macchine espresso professionali - Serie Premium per catena hotel internazionale. Include sistema automatico di pulizia e controllo temperatura avanzato..." />
-                        </div>
-
+                        <!-- Actions -->
                         <div class="d-flex justify-content-end gap-2">
                             <button type="button" class="btn btn-secondary" @onclick="HideModal">
                                 <i class="fas fa-times me-2"></i>
@@ -480,7 +524,7 @@
                                 @if (isSaving)
                                 {
                                     <span class="spinner-border spinner-border-sm me-2"></span>
-                                    <span>Salvando...</span>
+                                    <span>Salvando nel cloud...</span>
                                 }
                                 else
                                 {
@@ -515,8 +559,6 @@
     private bool isEditMode = false;
     private bool isSaving = false;
     private Order modalOrder = new();
-    
-    // CORREZIONE: DateTime nullable invece di string
     private DateTime? deliveryDateInput = null;
 
     protected override async Task OnInitializedAsync()
@@ -548,12 +590,12 @@
             }
             else
             {
-                errorMessage = result.ErrorMessage ?? "Errore nel caricamento delle commesse CoffeeMek";
+                errorMessage = result.ErrorMessage ?? "Errore nel caricamento delle commesse dal sistema cloud CoffeeMek";
             }
         }
         catch (Exception ex)
         {
-            errorMessage = $"Errore imprevisto nel sistema cloud: {ex.Message}";
+            errorMessage = $"Errore connessione cloud Azure: {ex.Message}";
         }
         finally
         {
@@ -595,7 +637,8 @@
             (string.IsNullOrEmpty(selectedPriority) || o.Priority.Equals(selectedPriority, StringComparison.OrdinalIgnoreCase)) &&
             (string.IsNullOrEmpty(searchTerm) || 
              o.OrderNumber.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
-             (o.Customer?.Name.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ?? false))
+             (o.Customer?.Name.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ?? false) ||
+             (o.Customer?.Country.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ?? false))
         ).OrderByDescending(o => o.OrderDate).ToList();
         
         StateHasChanged();
@@ -609,18 +652,22 @@
         ApplyFilters();
     }
 
+    private bool HasActiveFilters() => 
+        !string.IsNullOrEmpty(selectedStatus) || 
+        !string.IsNullOrEmpty(selectedPriority) || 
+        !string.IsNullOrEmpty(searchTerm);
+
     private void ShowCreateModal()
     {
         modalOrder = new Order
         {
             Status = "Pending",
             Priority = "Medium",
-            OrderDate = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ss.fffZ")
+            OrderDate = DateTime.UtcNow,
+            Quantity = 10
         };
         
-        // CORREZIONE: DateTime invece di string
-        deliveryDateInput = DateTime.UtcNow.AddDays(30);
-        
+        deliveryDateInput = DateTime.UtcNow.AddDays(45);
         isEditMode = false;
         showModal = true;
     }
@@ -632,35 +679,15 @@
             var result = await OrderService.GetOrderByIdAsync(orderId);
             if (result.IsSuccess && result.Data != null)
             {
-                modalOrder = new Order
-                {
-                    Id = result.Data.Id,
-                    OrderNumber = result.Data.OrderNumber,
-                    CustomerId = result.Data.CustomerId,
-                    FacilityId = result.Data.FacilityId,
-                    Quantity = result.Data.Quantity,
-                    Status = result.Data.Status,
-                    Priority = result.Data.Priority,
-                    Description = result.Data.Description,
-                    OrderDate = result.Data.OrderDate,
-                    DeliveryDate = result.Data.DeliveryDate
-                };
+                modalOrder = result.Data;
                 
-                // CORREZIONE: Gestione DateTime corretta
-                if (!string.IsNullOrEmpty(result.Data.DeliveryDate))
+                if (result.Data.DeliveryDate.HasValue)
                 {
-                    try
-                    {
-                        deliveryDateInput = DateTime.Parse(result.Data.DeliveryDate);
-                    }
-                    catch 
-                    { 
-                        deliveryDateInput = DateTime.UtcNow.AddDays(30);
-                    }
+                    deliveryDateInput = result.Data.DeliveryDate.Value;
                 }
                 else
                 {
-                    deliveryDateInput = DateTime.UtcNow.AddDays(30);
+                    deliveryDateInput = DateTime.UtcNow.AddDays(45);
                 }
                 
                 isEditMode = true;
@@ -669,7 +696,7 @@
         }
         catch (Exception ex)
         {
-            await JSRuntime.InvokeVoidAsync("alert", $"Errore nel caricamento commessa: {ex.Message}");
+            await JSRuntime.InvokeVoidAsync("alert", $"Errore caricamento commessa: {ex.Message}");
         }
     }
 
@@ -680,10 +707,9 @@
 
         try
         {
-            // CORREZIONE: Conversione DateTime corretta
             if (deliveryDateInput.HasValue)
             {
-                modalOrder.DeliveryDate = deliveryDateInput.Value.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
+                modalOrder.DeliveryDate = deliveryDateInput.Value;
             }
 
             ApiResponse<Order> result;
@@ -701,7 +727,7 @@
                 HideModal();
                 await LoadOrders();
                 await JSRuntime.InvokeVoidAsync("alert", 
-                    isEditMode ? "Commessa CoffeeMek modificata con successo!" : "Commessa CoffeeMek creata con successo!");
+                    isEditMode ? "Commessa CoffeeMek aggiornata con successo!" : "Commessa CoffeeMek creata con successo!");
             }
             else
             {
@@ -710,7 +736,7 @@
         }
         catch (Exception ex)
         {
-            await JSRuntime.InvokeVoidAsync("alert", $"Errore nel sistema cloud: {ex.Message}");
+            await JSRuntime.InvokeVoidAsync("alert", $"Errore sistema cloud: {ex.Message}");
         }
         finally
         {
@@ -722,7 +748,7 @@
     private async Task DeleteOrder(int orderId, string orderNumber)
     {
         var confirmed = await JSRuntime.InvokeAsync<bool>("confirm", 
-            $"Sei sicuro di voler eliminare la commessa CoffeeMek '{orderNumber}'?\n\nQuesta azione eliminerà anche tutti i lotti di produzione associati e non può essere annullata.");
+            $"Sei sicuro di voler eliminare la commessa CoffeeMek '{orderNumber}'?\n\nQuesta azione eliminerà tutti i lotti di produzione associati e non può essere annullata.");
         
         if (confirmed)
         {
@@ -736,17 +762,17 @@
                 }
                 else
                 {
-                    await JSRuntime.InvokeVoidAsync("alert", $"Errore nell'eliminazione: {result.ErrorMessage}");
+                    await JSRuntime.InvokeVoidAsync("alert", $"Errore eliminazione: {result.ErrorMessage}");
                 }
             }
             catch (Exception ex)
             {
-                await JSRuntime.InvokeVoidAsync("alert", $"Errore nel sistema cloud: {ex.Message}");
+                await JSRuntime.InvokeVoidAsync("alert", $"Errore sistema cloud: {ex.Message}");
             }
         }
     }
 
-    private void ViewOrderDetails(int orderId)
+    private void ViewOrderProduction(int orderId)
     {
         NavigationManager.NavigateTo($"/production-schedule?order={orderId}");
     }
@@ -755,14 +781,19 @@
     {
         showModal = false;
         modalOrder = new Order();
-        deliveryDateInput = null; // CORREZIONE: null invece di string.Empty
+        deliveryDateInput = null;
         isEditMode = false;
         isSaving = false;
     }
 
-    // Helper Methods
+    // Statistics Helper Methods
     private int GetStatusCount(string status) => filteredOrders.Count(o => o.Status == status);
+    private double GetStatusPercentage(string status) => orders.Count > 0 ? Math.Round((double)GetStatusCount(status) / orders.Count * 100, 1) : 0;
+    private int GetTotalQuantity() => filteredOrders.Sum(o => o.Quantity);
+    private int GetActiveCustomers() => filteredOrders.Where(o => o.Status != "Cancelled").Select(o => o.CustomerId).Distinct().Count();
+    private int GetActiveFacilities() => filteredOrders.Where(o => o.Status != "Cancelled").Select(o => o.FacilityId).Distinct().Count();
 
+    // UI Helper Methods
     private string GetCustomerFlag(string? country) => country?.ToLower() switch
     {
         "italy" => "🇮🇹",
@@ -781,6 +812,14 @@
         "brasil" => "🇧🇷",
         "vietnam" => "🇻🇳", 
         _ => "🌍"
+    };
+
+    private string GetShortFacilityName(string? name) => name switch
+    {
+        "Stabilimento Milano" => "Milano",
+        "Fábrica São Paulo" => "São Paulo",
+        "CoffeeMek Ho Chi Minh Factory" => "Ho Chi Minh",
+        _ => name ?? "N/A"
     };
 
     private string GetStatusBadgeColor(string? status) => status?.ToLower() switch
@@ -819,10 +858,24 @@
         _ => "⚪"
     };
 
+    private string GetLotStatusColor(string? status) => status?.ToLower() switch
+    {
+        "pending" => "secondary",
+        "in_progress" => "primary",
+        "completed" => "success",
+        "error" => "danger",
+        _ => "light"
+    };
+
+    private string FormatDate(DateTime? date)
+    {
+        if (!date.HasValue) return "N/A";
+        return date.Value.ToString("dd/MM/yyyy");
+    }
+
     private string FormatDate(string? dateString)
     {
-        if (string.IsNullOrEmpty(dateString))
-            return "N/A";
+        if (string.IsNullOrEmpty(dateString)) return "N/A";
         
         try
         {
@@ -835,14 +888,15 @@
         }
     }
 
-    private bool IsOverdue(string? endDate)
+    private bool IsOverdue(DateTime? date) => date.HasValue && date.Value < DateTime.Now;
+    
+    private bool IsOverdue(string? dateString)
     {
-        if (string.IsNullOrEmpty(endDate))
-            return false;
-            
+        if (string.IsNullOrEmpty(dateString)) return false;
+        
         try
         {
-            var date = DateTime.Parse(endDate);
+            var date = DateTime.Parse(dateString);
             return date < DateTime.Now;
         }
         catch

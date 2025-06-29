@@ -20,7 +20,7 @@ public class FakeCustomerApiClient : ICustomerService
                 Phone = "+39 02 1234567",
                 Address = "Via Milano 123, Milano",
                 Country = "Italy",
-                CreatedAt = DateTime.UtcNow.AddMonths(-6).ToString("yyyy-MM-ddTHH:mm:ss.fffZ")
+                CreatedAt = DateTime.UtcNow.AddMonths(-6) 
             },
             new()
             {
@@ -30,7 +30,7 @@ public class FakeCustomerApiClient : ICustomerService
                 Phone = "+55 11 98765432",
                 Address = "Avenida Paulista 456, São Paulo",
                 Country = "Brasil",
-                CreatedAt = DateTime.UtcNow.AddMonths(-4).ToString("yyyy-MM-ddTHH:mm:ss.fffZ")
+                CreatedAt = DateTime.UtcNow.AddMonths(-4) 
             },
             new()
             {
@@ -40,7 +40,7 @@ public class FakeCustomerApiClient : ICustomerService
                 Phone = "+84 28 87654321",
                 Address = "District 1, Ho Chi Minh City",
                 Country = "Vietnam",
-                CreatedAt = DateTime.UtcNow.AddMonths(-3).ToString("yyyy-MM-ddTHH:mm:ss.fffZ")
+                CreatedAt = DateTime.UtcNow.AddMonths(-3) 
             },
             new()
             {
@@ -50,7 +50,7 @@ public class FakeCustomerApiClient : ICustomerService
                 Phone = "+49 30 12345678",
                 Address = "Unter den Linden 789, Berlin",
                 Country = "Germany",
-                CreatedAt = DateTime.UtcNow.AddMonths(-2).ToString("yyyy-MM-ddTHH:mm:ss.fffZ")
+                CreatedAt = DateTime.UtcNow.AddMonths(-2) 
             },
             new()
             {
@@ -60,7 +60,7 @@ public class FakeCustomerApiClient : ICustomerService
                 Phone = "+33 1 23456789",
                 Address = "Champs-Élysées 101, Paris",
                 Country = "France",
-                CreatedAt = DateTime.UtcNow.AddMonths(-1).ToString("yyyy-MM-ddTHH:mm:ss.fffZ")
+                CreatedAt = DateTime.UtcNow.AddMonths(-1)
             }
         };
     }
@@ -97,7 +97,7 @@ public class FakeCustomerApiClient : ICustomerService
             Phone = customer.Phone,
             Address = customer.Address,
             Country = customer.Country,
-            CreatedAt = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ss.fffZ")
+            CreatedAt = DateTime.UtcNow
         };
 
         _customers.Add(newCustomer);

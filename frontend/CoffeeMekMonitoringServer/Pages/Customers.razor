@@ -148,11 +148,11 @@
                                     Cliente dal:
                                 </small>
                                 <span class="fw-bold">
-                                    @if (!string.IsNullOrEmpty(customer.CreatedAt))
+                                    @if (!string.IsNullOrEmpty(customer.CreatedAt.ToString("yyyy-MM-ddTHH:mm:ss.fffZ")))
                                     {
                                         @try
                                         {
-                                            var date = DateTime.Parse(customer.CreatedAt);
+                                            var date = DateTime.Parse(customer.CreatedAt.ToString("yyyy-MM-ddTHH:mm:ss.fffZ"));
                                             @date.ToString("dd/MM/yyyy")
                                         }
                                         catch
