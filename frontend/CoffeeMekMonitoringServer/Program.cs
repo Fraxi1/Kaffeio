@@ -67,7 +67,7 @@ else
     
     // AGGIUNTI: Nuovi servizi reali per produzione
      builder.Services.AddScoped<ICustomerService, CustomerApiClient>();
-    // builder.Services.AddScoped<IOrderService, OrderApiClient>();
+     builder.Services.AddScoped<IOrderService, OrderApiClient>();
     // builder.Services.AddScoped<IProductionScheduleService, ProductionScheduleApiClient>();
     // builder.Services.AddScoped<ITelemetryService, TelemetryApiClient>();
 }
