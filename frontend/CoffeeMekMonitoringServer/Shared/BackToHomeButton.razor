@@ -1,0 +1,16 @@
+@inject NavigationManager NavigationManager
+
+<button class="btn @ButtonClass" @onclick="GoToHome" type="button">
+    <i class="fas fa-home me-2"></i>
+    @ButtonText
+</button>
+
+@code {
+    [Parameter] public string ButtonText { get; set; } = "Torna alla Home";
+    [Parameter] public string ButtonClass { get; set; } = "btn-outline-secondary";
+
+    private void GoToHome()
+    {
+        NavigationManager.NavigateTo("/");
+    }
+}

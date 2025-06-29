@@ -11,10 +11,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Pages\Components\" />
-  </ItemGroup>
-
-  <ItemGroup>
     <AdditionalFiles Include="Pages\Components\Modals\UserModal.razor" />
   </ItemGroup>
 

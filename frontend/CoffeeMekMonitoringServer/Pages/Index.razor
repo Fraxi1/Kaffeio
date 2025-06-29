@@ -1,7 +1,15 @@
-﻿@page "/"
+﻿ @page "/"
 @using System.Security.Claims
+@using CoffeeMekMonitoringServer.Services.Interfaces
+@inject ILotService LotService
+@inject IMachineService MachineService
+@inject IFacilityService FacilityService
+@inject ICustomerService CustomerService
+@inject IOrderService OrderService
+@inject IProductionScheduleService ScheduleService
+@inject ITelemetryService TelemetryService
 
-<PageTitle>Dashboard - Kaffeio</PageTitle>
+<PageTitle>Dashboard CoffeeMek - Cloud Monitoring</PageTitle>
 
 <div class="container-fluid py-4">
     <AuthorizeView>
@@ -13,23 +21,36 @@
                         <div>
                             <h1 class="mb-1">
                                 <i class="fas fa-coffee text-primary me-3"></i>
-                                Dashboard Kaffeio
+                                Dashboard CoffeeMek S.p.A.
                             </h1>
                             <p class="text-muted mb-0">
-                                Sistema di Monitoraggio Macchine da Caffè
+                                <i class="fas fa-cloud me-2"></i>
+                                Cloud Monitoring Produzione Multi-Sede • Italia • Brasile • Vietnam
                             </p>
                         </div>
                         <div class="text-end">
-                            <small class="text-muted">
-                                <i class="fas fa-clock me-2"></i>
-                                @DateTime.Now.ToString("dd MMMM yyyy, HH:mm", new System.Globalization.CultureInfo("it-IT"))
-                            </small>
+                            <div class="mb-1">
+                                <small class="text-muted">
+                                    <i class="fas fa-clock me-2"></i>
+                                    @DateTime.UtcNow.ToString("dd MMMM yyyy, HH:mm:ss") UTC
+                                </small>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <span class="badge bg-success">
+                                    <i class="fas fa-circle me-1" style="font-size: 8px;"></i>
+                                    Sistema Operativo
+                                </span>
+                                <span class="badge bg-info">
+                                    <i class="fas fa-chart-line me-1"></i>
+                                    Real-Time
+                                </span>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Benvenuto -->
+            <!-- Benvenuto Utente -->
             <div class="row mb-4">
                 <div class="col-12">
                     <div class="alert alert-primary border-0 shadow-sm" role="alert">
@@ -37,10 +58,11 @@
                             <i class="fas fa-user-circle fa-2x me-3"></i>
                             <div>
                                 <h5 class="alert-heading mb-1">
-                                    Benvenuto, @context.User.Identity?.Name!
+                                    Benvenuto nel Sistema CoffeeMek, @context.User.Identity?.Name!
                                 </h5>
                                 <p class="mb-0">
-                                    Accesso effettuato come <strong>@context.User.FindFirst(ClaimTypes.Email)?.Value</strong>
+                                    Accesso effettuato come <strong>@context.User.FindFirst(ClaimTypes.Email)?.Value</strong> 
+                                    • Monitoraggio produzione multi-sede in tempo reale
                                 </p>
                             </div>
                         </div>
@@ -48,71 +70,334 @@
                 </div>
             </div>
 
-            <!-- Cards Principali -->
+            <!-- KPI Dashboard Multi-Sede -->
             <div class="row mb-4">
-                <div class="col-lg-4 col-md-6 mb-4">
-                    <div class="card border-0 shadow-sm h-100 hover-shadow">
-                        <div class="card-body text-center">
-                            <div class="mb-3">
-                                <i class="fas fa-users fa-3x text-primary"></i>
+                <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+                    <div class="card border-0 shadow-sm bg-primary text-white h-100">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div>
+                                    <h6 class="card-title mb-0">Lotti Attivi</h6>
+                                    <h3 class="mb-0">@lotCount</h3>
+                                    <small class="opacity-75">In produzione</small>
+                                </div>
+                                <i class="fas fa-box fa-2x opacity-75"></i>
                             </div>
-                            <h5 class="card-title">Gestione Utenti</h5>
-                            <p class="card-text text-muted">
-                                Visualizza la lista degli utenti registrati nel sistema Kaffeio
-                            </p>
-                            <a href="/users" class="btn btn-primary">
-                                <i class="fas fa-arrow-right me-2"></i>
-                                Vai agli Utenti
-                            </a>
                         </div>
                     </div>
                 </div>
-
-                <div class="col-lg-4 col-md-6 mb-4">
-                    <div class="card border-0 shadow-sm h-100 hover-shadow">
-                        <div class="card-body text-center">
-                            <div class="mb-3">
-                                <i class="fas fa-chart-line fa-3x text-success"></i>
+                <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+                    <div class="card border-0 shadow-sm bg-success text-white h-100">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div>
+                                    <h6 class="card-title mb-0">Macchine Operative</h6>
+                                    <h3 class="mb-0">@operativeMachinesCount</h3>
+                                    <small class="opacity-75">Workflow attivo</small>
+                                </div>
+                                <i class="fas fa-cogs fa-2x opacity-75"></i>
                             </div>
-                            <h5 class="card-title">Monitoraggio</h5>
-                            <p class="card-text text-muted">
-                                Visualizza statistiche e metriche delle macchine da caffè
-                            </p>
-                            <button class="btn btn-outline-success" disabled>
-                                <i class="fas fa-cog me-2"></i>
-                                In Sviluppo
-                            </button>
                         </div>
                     </div>
                 </div>
-
-                <div class="col-lg-4 col-md-6 mb-4">
-                    <div class="card border-0 shadow-sm h-100 hover-shadow">
-                        <div class="card-body text-center">
-                            <div class="mb-3">
-                                <i class="fas fa-cogs fa-3x text-info"></i>
+                <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+                    <div class="card border-0 shadow-sm bg-info text-white h-100">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div>
+                                    <h6 class="card-title mb-0">Sedi Produttive</h6>
+                                    <h3 class="mb-0">@facilityCount</h3>
+                                    <small class="opacity-75">Multi-timezone</small>
+                                </div>
+                                <i class="fas fa-globe fa-2x opacity-75"></i>
                             </div>
-                            <h5 class="card-title">Configurazione</h5>
-                            <p class="card-text text-muted">
-                                Configura le impostazioni del sistema e delle macchine
-                            </p>
-                            <button class="btn btn-outline-info" disabled>
-                                <i class="fas fa-cog me-2"></i>
-                                In Sviluppo
-                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+                    <div class="card border-0 shadow-sm bg-warning text-white h-100">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div>
+                                    <h6 class="card-title mb-0">Clienti Attivi</h6>
+                                    <h3 class="mb-0">@customerCount</h3>
+                                    <small class="opacity-75">Globali</small>
+                                </div>
+                                <i class="fas fa-handshake fa-2x opacity-75"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+                    <div class="card border-0 shadow-sm bg-secondary text-white h-100">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div>
+                                    <h6 class="card-title mb-0">Commesse</h6>
+                                    <h3 class="mb-0">@orderCount</h3>
+                                    <small class="opacity-75">In gestione</small>
+                                </div>
+                                <i class="fas fa-clipboard-list fa-2x opacity-75"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+                    <div class="card border-0 shadow-sm bg-dark text-white h-100">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div>
+                                    <h6 class="card-title mb-0">Schedulazioni</h6>
+                                    <h3 class="mb-0">@scheduleCount</h3>
+                                    <small class="opacity-75">Pianificate</small>
+                                </div>
+                                <i class="fas fa-calendar-alt fa-2x opacity-75"></i>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Informazioni Sistema -->
+            <!-- Workflow Produzione Overview -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-gradient-primary text-white border-0">
+                            <h5 class="mb-0">
+                                <i class="fas fa-industry me-2"></i>
+                                Workflow Produzione CoffeeMek: Fresa CNC → Tornio → Assemblaggio → Test
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                @{
+                                    var workflowData = new[]
+                                    {
+                                        new { Phase = "Fresa CNC", Icon = "fas fa-cog", Color = "primary", Active = workflowStats.GetValueOrDefault("fresa", 0), Total = 4 },
+                                        new { Phase = "Tornio", Icon = "fas fa-circle-notch", Color = "success", Active = workflowStats.GetValueOrDefault("tornio", 0), Total = 3 },
+                                        new { Phase = "Assemblaggio", Icon = "fas fa-puzzle-piece", Color = "warning", Active = workflowStats.GetValueOrDefault("assemblaggio", 0), Total = 5 },
+                                        new { Phase = "Test", Icon = "fas fa-vial", Color = "info", Active = workflowStats.GetValueOrDefault("test", 0), Total = 2 }
+                                    };
+                                }
+                                
+                                @for (int i = 0; i < workflowData.Length; i++)
+                                {
+                                    var phase = workflowData[i];
+                                    var efficiency = phase.Total > 0 ? (double)phase.Active / phase.Total * 100 : 0;
+                                    
+                                    <div class="col-md-3 text-center position-relative">
+                                        <div class="mb-3">
+                                            <i class="@phase.Icon fa-3x text-@phase.Color"></i>
+                                        </div>
+                                        <h5 class="mb-2">@phase.Phase</h5>
+                                        <div class="mb-2">
+                                            <span class="badge bg-@phase.Color fs-6">
+                                                @phase.Active/@phase.Total Macchine
+                                            </span>
+                                        </div>
+                                        <div class="progress mb-2" style="height: 8px;">
+                                            <div class="progress-bar bg-@phase.Color" style="width: @efficiency.ToString("F0")%"></div>
+                                        </div>
+                                        <small class="text-muted">Efficienza: @efficiency.ToString("F1")%</small>
+                                        
+                                        @if (i < workflowData.Length - 1)
+                                        {
+                                            <div class="d-none d-md-block position-absolute" style="right: -20px; top: 50%; transform: translateY(-50%);">
+                                                <i class="fas fa-arrow-right fa-2x text-muted"></i>
+                                            </div>
+                                        }
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sezioni Principali del Sistema -->
+            <div class="row mb-4">
+                <div class="col-lg-4 col-md-6 mb-4">
+                    <div class="card border-0 shadow-sm h-100 hover-shadow">
+                        <div class="card-header bg-primary text-white border-0">
+                            <h6 class="mb-0">
+                                <i class="fas fa-handshake me-2"></i>
+                                Business Management
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row mb-3">
+                                <div class="col-6">
+                                    <div class="text-center">
+                                        <h4 class="text-primary mb-1">@customerCount</h4>
+                                        <small class="text-muted">Clienti</small>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="text-center">
+                                        <h4 class="text-success mb-1">@orderCount</h4>
+                                        <small class="text-muted">Commesse</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="d-grid gap-2">
+                                <a href="/customers" class="btn btn-outline-primary btn-sm">
+                                    <i class="fas fa-users me-2"></i>
+                                    Gestisci Clienti
+                                </a>
+                                <a href="/orders" class="btn btn-outline-success btn-sm">
+                                    <i class="fas fa-clipboard-list me-2"></i>
+                                    Gestisci Commesse
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4 col-md-6 mb-4">
+                    <div class="card border-0 shadow-sm h-100 hover-shadow">
+                        <div class="card-header bg-success text-white border-0">
+                            <h6 class="mb-0">
+                                <i class="fas fa-industry me-2"></i>
+                                Production Management
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row mb-3">
+                                <div class="col-6">
+                                    <div class="text-center">
+                                        <h4 class="text-info mb-1">@lotCount</h4>
+                                        <small class="text-muted">Lotti</small>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="text-center">
+                                        <h4 class="text-warning mb-1">@scheduleCount</h4>
+                                        <small class="text-muted">Schedule</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="d-grid gap-2">
+                                <a href="/lots" class="btn btn-outline-info btn-sm">
+                                    <i class="fas fa-box me-2"></i>
+                                    Gestisci Lotti
+                                </a>
+                                <a href="/production-schedule" class="btn btn-outline-warning btn-sm">
+                                    <i class="fas fa-calendar-alt me-2"></i>
+                                    Schedulazione
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4 col-md-6 mb-4">
+                    <div class="card border-0 shadow-sm h-100 hover-shadow">
+                        <div class="card-header bg-info text-white border-0">
+                            <h6 class="mb-0">
+                                <i class="fas fa-chart-line me-2"></i>
+                                Real-Time Monitoring
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row mb-3">
+                                <div class="col-6">
+                                    <div class="text-center">
+                                        <h4 class="text-success mb-1">@operativeMachinesCount</h4>
+                                        <small class="text-muted">Operative</small>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="text-center">
+                                        <h4 class="text-primary mb-1">@facilityCount</h4>
+                                        <small class="text-muted">Sedi</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="d-grid gap-2">
+                                <a href="/telemetry" class="btn btn-outline-success btn-sm">
+                                    <i class="fas fa-chart-area me-2"></i>
+                                    Telemetria Live
+                                </a>
+                                <a href="/machines" class="btn btn-outline-primary btn-sm">
+                                    <i class="fas fa-cogs me-2"></i>
+                                    Status Macchine
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Status Multi-Sede con Fusi Orari -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-dark text-white border-0">
+                            <h5 class="mb-0">
+                                <i class="fas fa-globe me-2"></i>
+                                Status Sedi Produttive Multi-Timezone
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                @{
+                                    var facilitiesData = new[]
+                                    {
+                                        new { Name = "Milano", Country = "Italia", Flag = "🇮🇹", TimeZone = "+1", Machines = 15, Active = 12, Color = "success" },
+                                        new { Name = "São Paulo", Country = "Brasile", Flag = "🇧🇷", TimeZone = "-3", Machines = 12, Active = 10, Color = "warning" },
+                                        new { Name = "Ho Chi Minh", Country = "Vietnam", Flag = "🇻🇳", TimeZone = "+7", Machines = 10, Active = 8, Color = "info" }
+                                    };
+                                }
+                                
+                                @foreach (var facility in facilitiesData)
+                                {
+                                    var localTime = DateTime.UtcNow.AddHours(int.Parse(facility.TimeZone.Replace("+", "")));
+                                    var efficiency = (double)facility.Active / facility.Machines * 100;
+                                    
+                                    <div class="col-md-4 mb-3">
+                                        <div class="card border-start border-4 border-@facility.Color">
+                                            <div class="card-body">
+                                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                                    <h6 class="mb-0">
+                                                        @facility.Flag @facility.Name
+                                                    </h6>
+                                                    <span class="badge bg-@facility.Color">
+                                                        @facility.Active/@facility.Machines Attive
+                                                    </span>
+                                                </div>
+                                                <div class="row text-center">
+                                                    <div class="col-6">
+                                                        <small class="text-muted d-block">Ora Locale</small>
+                                                        <strong>@localTime.ToString("HH:mm:ss")</strong>
+                                                        <br>
+                                                        <small class="text-muted">UTC@facility.TimeZone</small>
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <small class="text-muted d-block">Efficienza</small>
+                                                        <strong class="text-@facility.Color">@efficiency.ToString("F1")%</strong>
+                                                        <div class="progress mt-1" style="height: 4px;">
+                                                            <div class="progress-bar bg-@facility.Color" style="width: @efficiency%"></div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Infrastructure & System Status -->
             <div class="row">
                 <div class="col-lg-8 mb-4">
                     <div class="card border-0 shadow-sm">
                         <div class="card-header bg-light border-0">
                             <h6 class="mb-0">
                                 <i class="fas fa-info-circle me-2"></i>
-                                Informazioni Sistema
+                                Informazioni Sistema & Utente
                             </h6>
                         </div>
                         <div class="card-body">
@@ -129,22 +414,28 @@
                                         <li class="mb-1">
                                             <strong>ID Utente:</strong> @context.User.FindFirst("UserId")?.Value
                                         </li>
+                                        <li class="mb-1">
+                                            <strong>Ruolo:</strong> <span class="badge bg-primary">Administrator</span>
+                                        </li>
                                     </ul>
                                 </div>
                                 <div class="col-md-6">
-                                    <h6 class="text-muted mb-2">Sistema</h6>
+                                    <h6 class="text-muted mb-2">Sistema CoffeeMek</h6>
                                     <ul class="list-unstyled">
                                         <li class="mb-1">
-                                            <strong>Versione:</strong> v1.0.0
+                                            <strong>Versione:</strong> v1.0.0 Cloud
                                         </li>
                                         <li class="mb-1">
-                                            <strong>API:</strong> Kaffeio Backend
+                                            <strong>Backend:</strong> ASP.NET Core + Azure
                                         </li>
                                         <li class="mb-1">
-                                            <strong>Ambiente:</strong> 
+                                            <strong>Database:</strong> Azure SQL Database
+                                        </li>
+                                        <li class="mb-1">
+                                            <strong>Modalità:</strong> 
                                             @if (Configuration.GetValue<bool>("UseFakes"))
                                             {
-                                                <span class="badge bg-warning">Demo</span>
+                                                <span class="badge bg-warning">Demo/Fake Data</span>
                                             }
                                             else
                                             {
@@ -162,22 +453,35 @@
                         <div class="card-header bg-light border-0">
                             <h6 class="mb-0">
                                 <i class="fas fa-link me-2"></i>
-                                Collegamenti Rapidi
+                                Accesso Rapido
                             </h6>
                         </div>
                         <div class="card-body">
                             <div class="d-grid gap-2">
-                                <a href="/users" class="btn btn-outline-primary btn-sm">
+                                <a href="/telemetry" class="btn btn-primary btn-sm">
+                                    <i class="fas fa-chart-line me-2"></i>
+                                    Telemetria Real-Time
+                                </a>
+                                <a href="/production-schedule" class="btn btn-success btn-sm">
+                                    <i class="fas fa-calendar-alt me-2"></i>
+                                    Schedulazione
+                                </a>
+                                <a href="/customers" class="btn btn-info btn-sm">
+                                    <i class="fas fa-handshake me-2"></i>
+                                    Clienti Globali
+                                </a>
+                                <a href="/orders" class="btn btn-warning btn-sm">
+                                    <i class="fas fa-clipboard-list me-2"></i>
+                                    Commesse
+                                </a>
+                                <hr class="my-2">
+                                <a href="/facilities" class="btn btn-outline-secondary btn-sm">
+                                    <i class="fas fa-building me-2"></i>
+                                    Gestione Sedi
+                                </a>
+                                <a href="/users" class="btn btn-outline-secondary btn-sm">
                                     <i class="fas fa-users me-2"></i>
-                                    Lista Utenti
-                                </a>
-                                <a href="/counter" class="btn btn-outline-secondary btn-sm">
-                                    <i class="fas fa-calculator me-2"></i>
-                                    Counter Demo
-                                </a>
-                                <a href="/weather" class="btn btn-outline-info btn-sm">
-                                    <i class="fas fa-cloud-sun me-2"></i>
-                                    Weather Demo
+                                    Gestione Utenti
                                 </a>
                             </div>
                         </div>
@@ -186,20 +490,49 @@
             </div>
         </Authorized>
         <NotAuthorized>
+            <!-- Login Welcome Screen -->
             <div class="row justify-content-center">
                 <div class="col-md-8 col-lg-6">
-                    <div class="card border-0 shadow-sm">
+                    <div class="card border-0 shadow-lg">
                         <div class="card-body text-center py-5">
                             <div class="mb-4">
                                 <i class="fas fa-coffee fa-4x text-primary"></i>
                             </div>
-                            <h2 class="mb-3">Benvenuto in Kaffeio</h2>
+                            <h2 class="mb-3">CoffeeMek S.p.A.</h2>
+                            <h4 class="text-primary mb-3">Cloud Monitoring Produzione</h4>
                             <p class="text-muted mb-4">
-                                Sistema di Monitoraggio per Macchine da Caffè
+                                Sistema di monitoraggio e schedulazione produzione industriale per macchine da caffè professionali.
+                                <br><br>
+                                <strong>Sedi Produttive:</strong> Italia • Brasile • Vietnam
+                                <br>
+                                <strong>Workflow:</strong> Fresa CNC → Tornio → Assemblaggio → Test
                             </p>
-                            <p class="text-muted mb-4">
-                                Effettua l'accesso per visualizzare il dashboard e gestire il sistema.
-                            </p>
+                            <div class="row mb-4">
+                                <div class="col-4">
+                                    <i class="fas fa-industry fa-2x text-primary mb-2"></i>
+                                    <div>
+                                        <strong>Produzione</strong>
+                                        <br>
+                                        <small class="text-muted">Multi-Sede</small>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <i class="fas fa-chart-line fa-2x text-success mb-2"></i>
+                                    <div>
+                                        <strong>Monitoring</strong>
+                                        <br>
+                                        <small class="text-muted">Real-Time</small>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <i class="fas fa-cloud fa-2x text-info mb-2"></i>
+                                    <div>
+                                        <strong>Cloud</strong>
+                                        <br>
+                                        <small class="text-muted">Azure</small>
+                                    </div>
+                                </div>
+                            </div>
                             <a href="/login" class="btn btn-primary btn-lg">
                                 <i class="fas fa-sign-in-alt me-2"></i>
                                 Accedi al Sistema
@@ -214,4 +547,122 @@
 
 @code {
     [Inject] private IConfiguration Configuration { get; set; } = default!;
+    
+    // KPI Counters
+    private int lotCount = 0;
+    private int operativeMachinesCount = 0;
+    private int facilityCount = 0;
+    private int customerCount = 0;
+    private int orderCount = 0;
+    private int scheduleCount = 0;
+    private Dictionary<string, int> workflowStats = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDashboardStats();
+    }
+
+    private async Task LoadDashboardStats()
+    {
+        try
+        {
+            // Carica statistiche aggregate per dashboard
+            await LoadLotStats();
+            await LoadMachineStats();
+            await LoadFacilityStats();
+            await LoadCustomerStats();
+            await LoadOrderStats();
+            await LoadScheduleStats();
+            
+            StateHasChanged();
+        }
+        catch
+        {
+            // Gestione errori silenziosa per dashboard
+        }
+    }
+
+    private async Task LoadLotStats()
+    {
+        try
+        {
+            var result = await LotService.GetAllLotsAsync();
+            if (result.IsSuccess && result.Data != null)
+            {
+                lotCount = result.Data.Count;
+            }
+        }
+        catch { /* Gestione silente */ }
+    }
+
+    private async Task LoadMachineStats()
+    {
+        try
+        {
+            var result = await MachineService.GetAllMachinesAsync();
+            if (result.IsSuccess && result.Data != null)
+            {
+                operativeMachinesCount = result.Data.Count(m => m.Status == "operative");
+                
+                // Workflow stats
+                workflowStats["fresa"] = result.Data.Count(m => m.Type == "fresa" && m.Status == "operative");
+                workflowStats["tornio"] = result.Data.Count(m => m.Type == "tornio" && m.Status == "operative");
+                workflowStats["assemblaggio"] = result.Data.Count(m => m.Type == "assemblaggio" && m.Status == "operative");
+                workflowStats["test"] = result.Data.Count(m => m.Type == "test" && m.Status == "operative");
+            }
+        }
+        catch { /* Gestione silente */ }
+    }
+
+    private async Task LoadFacilityStats()
+    {
+        try
+        {
+            var result = await FacilityService.GetAllFacilitiesAsync();
+            if (result.IsSuccess && result.Data != null)
+            {
+                facilityCount = result.Data.Count;
+            }
+        }
+        catch { /* Gestione silente */ }
+    }
+
+    private async Task LoadCustomerStats()
+    {
+        try
+        {
+            var result = await CustomerService.GetAllCustomersAsync();
+            if (result.IsSuccess && result.Data != null)
+            {
+                customerCount = result.Data.Count;
+            }
+        }
+        catch { /* Gestione silente */ }
+    }
+
+    private async Task LoadOrderStats()
+    {
+        try
+        {
+            var result = await OrderService.GetAllOrdersAsync();
+            if (result.IsSuccess && result.Data != null)
+            {
+                orderCount = result.Data.Count;
+            }
+        }
+        catch { /* Gestione silente */ }
+    }
+
+    private async Task LoadScheduleStats()
+    {
+        try
+        {
+            var result = await ScheduleService.GetAllSchedulesAsync();
+            if (result.IsSuccess && result.Data != null)
+            {
+                scheduleCount = result.Data.Count;
+            }
+        }
+        catch { /* Gestione silente */ }
+    }
 }

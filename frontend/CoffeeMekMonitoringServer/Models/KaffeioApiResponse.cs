@@ -2,6 +2,7 @@ namespace CoffeeMekMonitoringServer.Models;
 
 using System.Text.Json.Serialization;
 
+  
  
 // Classe generica per tutte le risposte dell'API Kaffeio
 public class KaffeioApiResponse<T>
@@ -18,6 +19,20 @@ public class KaffeioApiResponse<T>
     [JsonPropertyName("path")]
     public string? Path { get; set; }
 }
+
+ 
+
+// Response per Lots
+public class LotsListResponse : KaffeioApiResponse<List<Lot>> { }
+public class LotResponse : KaffeioApiResponse<Lot> { }
+
+// Response per Machines
+public class MachinesListResponse : KaffeioApiResponse<List<Machine>> { }
+public class MachineResponse : KaffeioApiResponse<Machine> { }
+
+// Response per Facilities
+public class FacilitiesListResponse : KaffeioApiResponse<List<Facility>> { }
+public class FacilityResponse : KaffeioApiResponse<Facility> { }
 
 // Specializzazioni per diversi tipi di response
 public class UsersListResponse : KaffeioApiResponse<List<User>>

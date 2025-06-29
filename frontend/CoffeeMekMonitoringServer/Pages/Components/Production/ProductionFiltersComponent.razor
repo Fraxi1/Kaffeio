@@ -1,0 +1,74 @@
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-primary text-white border-0">
+                <h6 class="mb-0">
+                    <i class="fas fa-filter me-2"></i>
+                    Filtri Multi-Sede CoffeeMek (Italia • Brasile • Vietnam)
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row align-items-end">
+                    <div class="col-md-3">
+                        <label class="form-label">Sede Produttiva:</label>
+                        <InputSelect class="form-select" Value="@FacilityId" ValueChanged="@FacilityIdChanged">
+                            <option value="0">🌍 Tutte le sedi CoffeeMek</option>
+                            <option value="1">🇮🇹 Milano, Italia (UTC+1)</option>
+                            <option value="2">🇧🇷 São Paulo, Brasile (UTC-3)</option>
+                            <option value="3">🇻🇳 Ho Chi Minh, Vietnam (UTC+7)</option>
+                        </InputSelect>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Fase Workflow Caffè:</label>
+                        <InputSelect class="form-select" Value="@Phase" ValueChanged="@PhaseChanged">
+                            <option value="">Tutte le fasi produzione</option>
+                            <option value="Fresa">🔧 Fresa CNC (Fase 1)</option>
+                            <option value="Tornio">⚙️ Tornio Automatico (Fase 2)</option>
+                            <option value="Assemblaggio">🔩 Linea Assemblaggio (Fase 3)</option>
+                            <option value="Test">🧪 Linea Test (Fase 4)</option>
+                        </InputSelect>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Stato Schedulazione:</label>
+                        <InputSelect class="form-select" Value="@Status" ValueChanged="@StatusChanged">
+                            <option value="">Tutti gli stati</option>
+                            <option value="Scheduled">📅 Programmato</option>
+                            <option value="InProgress">⚡ In Produzione</option>
+                            <option value="Completed">✅ Completato</option>
+                            <option value="Delayed">⏰ In Ritardo</option>
+                        </InputSelect>
+                    </div>
+                    <div class="col-md-3">
+                        <button class="btn btn-outline-secondary w-100" @onclick="ClearAll">
+                            <i class="fas fa-times me-2"></i>
+                            Reset Filtri
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    // CORREZIONE: Parameter standard invece di bind personalizzato
+    [Parameter] public int FacilityId { get; set; }
+    [Parameter] public EventCallback<int> FacilityIdChanged { get; set; }
+    
+    [Parameter] public string Phase { get; set; } = string.Empty;
+    [Parameter] public EventCallback<string> PhaseChanged { get; set; }
+    
+    [Parameter] public string Status { get; set; } = string.Empty;
+    [Parameter] public EventCallback<string> StatusChanged { get; set; }
+    
+    [Parameter] public EventCallback OnFiltersChanged { get; set; }
+
+    private async Task ClearAll()
+    {
+        // Reset tutti i filtri per le sedi CoffeeMek
+        await FacilityIdChanged.InvokeAsync(0);
+        await PhaseChanged.InvokeAsync(string.Empty);
+        await StatusChanged.InvokeAsync(string.Empty);
+        await OnFiltersChanged.InvokeAsync();
+    }
+}

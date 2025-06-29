@@ -1,0 +1,237 @@
+@page "/lots"
+@using CoffeeMekMonitoringServer.Models
+@using CoffeeMekMonitoringServer.Services.Interfaces
+@inject ILotService LotService
+@inject NavigationManager NavigationManager
+
+<PageTitle>Lotti di Produzione - Kaffeio</PageTitle>
+
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col">
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <h2 class="mb-1">
+                        <i class="fas fa-box text-primary me-3"></i>
+                        Lotti di Produzione
+                    </h2>
+                    <p class="text-muted mb-0">Gestione e monitoraggio dei lotti di produzione caffè</p>
+                </div>
+                <div class="d-flex gap-2">
+                    <a href="/" class="btn btn-outline-primary">
+                        <i class="fas fa-home me-2"></i>
+                        Dashboard
+                    </a>
+                    <button class="btn btn-outline-secondary" @onclick="LoadLots">
+                        <i class="fas fa-sync-alt me-2"></i>
+                        Aggiorna
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Breadcrumb di Navigazione -->
+    <div class="row mb-3">
+        <div class="col">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item">
+                        <a href="/" class="text-decoration-none">
+                            <i class="fas fa-home me-1"></i>
+                            Dashboard
+                        </a>
+                    </li>
+                    <li class="breadcrumb-item active" aria-current="page">
+                        <i class="fas fa-box me-1"></i>
+                        Lotti di Produzione
+                    </li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    @if (isLoading)
+    {
+        <div class="row">
+            <div class="col-12">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body text-center py-5">
+                        <div class="spinner-border text-primary mb-3" role="status">
+                            <span class="visually-hidden">Caricamento...</span>
+                        </div>
+                        <h5 class="text-muted">Caricamento lotti in corso...</h5>
+                        <p class="text-muted mb-0">Connessione all'API Kaffeio</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+    else if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="row">
+            <div class="col-12">
+                <div class="alert alert-danger border-0 shadow-sm" role="alert">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-exclamation-triangle fa-2x me-3"></i>
+                        <div class="flex-grow-1">
+                            <h5 class="alert-heading mb-1">Errore nel caricamento</h5>
+                            <p class="mb-2">@errorMessage</p>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-outline-danger btn-sm" @onclick="LoadLots">
+                                    <i class="fas fa-redo me-2"></i>
+                                    Riprova
+                                </button>
+                                <a href="/" class="btn btn-outline-secondary btn-sm">
+                                    <i class="fas fa-home me-2"></i>
+                                    Torna alla Dashboard
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+    else if (lots.Any())
+    {
+        <div class="row">
+            @foreach (var lot in lots)
+            {
+                <div class="col-lg-6 col-xl-4 mb-4">
+                    <div class="card border-0 shadow-sm h-100 hover-shadow">
+                        <div class="card-header bg-light border-0">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <h6 class="mb-0 fw-bold">
+                                    <i class="fas fa-box me-2"></i>
+                                    @lot.Code
+                                </h6>
+                                <span class="badge bg-@lot.StatusBadge">
+                                    <i class="@lot.StatusIcon me-1"></i>
+                                    @lot.Status.ToUpper()
+                                </span>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <p class="text-muted mb-3">@lot.Description</p>
+                            
+                            <div class="mb-3">
+                                <small class="text-muted d-block mb-1">
+                                    <i class="fas fa-calendar-alt me-2"></i>
+                                    Creato il:
+                                </small>
+                                <span class="fw-bold">
+                                    @if (!string.IsNullOrEmpty(lot.CreatedAt))
+                                    {
+                                        @try
+                                        {
+                                            var date = DateTime.Parse(lot.CreatedAt);
+                                            @date.ToString("dd/MM/yyyy HH:mm")
+                                        }
+                                        catch
+                                        {
+                                            @lot.CreatedAt
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">Non disponibile</span>
+                                    }
+                                </span>
+                            </div>
+
+                            @if (lot.CurrentMachine != null)
+                            {
+                                <div class="border-top pt-3">
+                                    <small class="text-muted d-block mb-2">
+                                        <i class="fas fa-cog me-2"></i>
+                                        Macchina Corrente:
+                                    </small>
+                                    <div class="d-flex align-items-center justify-content-between">
+                                        <div>
+                                            <div class="fw-bold">@lot.CurrentMachine.Name</div>
+                                            <small class="text-muted">@lot.CurrentMachine.Type</small>
+                                        </div>
+                                        <span class="badge bg-@lot.CurrentMachine.StatusBadge">
+                                            <i class="@lot.CurrentMachine.StatusIcon me-1"></i>
+                                            @lot.CurrentMachine.Status
+                                        </span>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="row">
+            <div class="col-12">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body text-center py-5">
+                        <div class="mb-4">
+                            <i class="fas fa-box fa-4x text-muted"></i>
+                        </div>
+                        <h4 class="text-muted mb-3">Nessun lotto trovato</h4>
+                        <p class="text-muted mb-4">
+                            Non ci sono lotti di produzione nel sistema.
+                        </p>
+                        <div class="d-flex justify-content-center gap-2">
+                            <button class="btn btn-primary" @onclick="LoadLots">
+                                <i class="fas fa-sync-alt me-2"></i>
+                                Ricarica lista
+                            </button>
+                            <a href="/" class="btn btn-outline-secondary">
+                                <i class="fas fa-home me-2"></i>
+                                Torna alla Dashboard
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private List<Lot> lots = new();
+    private bool isLoading = true;
+    private string errorMessage = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadLots();
+    }
+
+    private async Task LoadLots()
+    {
+        isLoading = true;
+        errorMessage = string.Empty;
+        StateHasChanged();
+
+        try
+        {
+            var result = await LotService.GetAllLotsAsync();
+            
+            if (result.IsSuccess && result.Data != null)
+            {
+                lots = result.Data;
+            }
+            else
+            {
+                errorMessage = result.ErrorMessage ?? "Errore nel caricamento dei lotti";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Errore imprevisto: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+}
