@@ -1,3 +1,5 @@
+@implements IDisposable
+
 <div class="row mb-4">
     <div class="col-12">
         <div class="card border-0 shadow-sm">
@@ -11,32 +13,33 @@
                 <div class="row align-items-end">
                     <div class="col-md-3">
                         <label class="form-label">Sede Produttiva:</label>
-                        <InputSelect class="form-select" Value="@FacilityId" ValueChanged="@FacilityIdChanged">
+                        <!-- CORREZIONE: Usa select HTML normale per evitare problemi -->
+                        <select class="form-select" value="@FacilityId" @onchange="OnFacilityChanged">
                             <option value="0">🌍 Tutte le sedi CoffeeMek</option>
                             <option value="1">🇮🇹 Milano, Italia (UTC+1)</option>
                             <option value="2">🇧🇷 São Paulo, Brasile (UTC-3)</option>
                             <option value="3">🇻🇳 Ho Chi Minh, Vietnam (UTC+7)</option>
-                        </InputSelect>
+                        </select>
                     </div>
                     <div class="col-md-3">
                         <label class="form-label">Fase Workflow Caffè:</label>
-                        <InputSelect class="form-select" Value="@Phase" ValueChanged="@PhaseChanged">
+                        <select class="form-select" value="@Phase" @onchange="OnPhaseChanged">
                             <option value="">Tutte le fasi produzione</option>
                             <option value="Fresa">🔧 Fresa CNC (Fase 1)</option>
                             <option value="Tornio">⚙️ Tornio Automatico (Fase 2)</option>
                             <option value="Assemblaggio">🔩 Linea Assemblaggio (Fase 3)</option>
                             <option value="Test">🧪 Linea Test (Fase 4)</option>
-                        </InputSelect>
+                        </select>
                     </div>
                     <div class="col-md-3">
                         <label class="form-label">Stato Schedulazione:</label>
-                        <InputSelect class="form-select" Value="@Status" ValueChanged="@StatusChanged">
+                        <select class="form-select" value="@Status" @onchange="OnStatusChanged">
                             <option value="">Tutti gli stati</option>
                             <option value="Scheduled">📅 Programmato</option>
                             <option value="InProgress">⚡ In Produzione</option>
                             <option value="Completed">✅ Completato</option>
                             <option value="Delayed">⏰ In Ritardo</option>
-                        </InputSelect>
+                        </select>
                     </div>
                     <div class="col-md-3">
                         <button class="btn btn-outline-secondary w-100" @onclick="ClearAll">
@@ -51,7 +54,8 @@
 </div>
 
 @code {
-    // CORREZIONE: Parameter standard invece di bind personalizzato
+    private bool _disposed = false;
+
     [Parameter] public int FacilityId { get; set; }
     [Parameter] public EventCallback<int> FacilityIdChanged { get; set; }
     
@@ -63,12 +67,82 @@
     
     [Parameter] public EventCallback OnFiltersChanged { get; set; }
 
+    // CORREZIONE: Event handlers protetti da dispose
+    private async Task OnFacilityChanged(ChangeEventArgs e)
+    {
+        if (_disposed) return;
+        
+        if (int.TryParse(e.Value?.ToString(), out int facilityId))
+        {
+            await FacilityIdChanged.InvokeAsync(facilityId);
+        }
+        else
+        {
+            await FacilityIdChanged.InvokeAsync(0);
+        }
+        
+        if (!_disposed)
+        {
+            await OnFiltersChanged.InvokeAsync();
+        }
+    }
+
+    private async Task OnPhaseChanged(ChangeEventArgs e)
+    {
+        if (_disposed) return;
+        
+        await PhaseChanged.InvokeAsync(e.Value?.ToString() ?? string.Empty);
+        
+        if (!_disposed)
+        {
+            await OnFiltersChanged.InvokeAsync();
+        }
+    }
+
+    private async Task OnStatusChanged(ChangeEventArgs e)
+    {
+        if (_disposed) return;
+        
+        await StatusChanged.InvokeAsync(e.Value?.ToString() ?? string.Empty);
+        
+        if (!_disposed)
+        {
+            await OnFiltersChanged.InvokeAsync();
+        }
+    }
+
     private async Task ClearAll()
     {
-        // Reset tutti i filtri per le sedi CoffeeMek
-        await FacilityIdChanged.InvokeAsync(0);
-        await PhaseChanged.InvokeAsync(string.Empty);
-        await StatusChanged.InvokeAsync(string.Empty);
-        await OnFiltersChanged.InvokeAsync();
+        if (_disposed) return;
+
+        try
+        {
+            // CORREZIONE: Operazioni sequenziali invece che parallele per evitare race condition
+            await FacilityIdChanged.InvokeAsync(0);
+            
+            if (!_disposed)
+            {
+                await PhaseChanged.InvokeAsync(string.Empty);
+            }
+            
+            if (!_disposed)
+            {
+                await StatusChanged.InvokeAsync(string.Empty);
+            }
+            
+            if (!_disposed)
+            {
+                await OnFiltersChanged.InvokeAsync();
+            }
+        }
+        catch (ObjectDisposedException)
+        {
+            // Ignora se il componente è già stato disposto
+        }
+    }
+
+    public void Dispose()
+    {
+        _disposed = true;
     }
 }

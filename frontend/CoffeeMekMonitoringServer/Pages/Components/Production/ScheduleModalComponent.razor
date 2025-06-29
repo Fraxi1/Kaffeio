@@ -1,6 +1,7 @@
 @using ProductionScheduleModel = CoffeeMekMonitoringServer.Models.ProductionSchedule
+@implements IDisposable
 
-@if (Show)
+@if (Show && !_disposed)
 {
     <div class="modal show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
         <div class="modal-dialog modal-lg">
@@ -10,10 +11,10 @@
                         <i class="fas fa-@(IsEditMode ? "edit" : "plus") me-2"></i>
                         @(IsEditMode ? "Modifica Schedulazione CoffeeMek" : "Nuova Schedulazione CoffeeMek")
                     </h5>
-                    <button type="button" class="btn-close btn-close-white" @onclick="@(() => OnCancel.InvokeAsync())"></button>
+                    <button type="button" class="btn-close btn-close-white" @onclick="HandleCancel"></button>
                 </div>
                 <div class="modal-body">
-                    <EditForm Model="@Schedule" OnValidSubmit="@HandleSave">
+                    <EditForm Model="@Schedule" OnValidSubmit="HandleSave">
                         <DataAnnotationsValidator />
                         
                         <!-- Workflow CoffeeMek Info -->
@@ -30,23 +31,24 @@
                         <div class="row mb-3">
                             <div class="col-md-6">
                                 <label class="form-label">Sede Produttiva CoffeeMek *</label>
-                                <InputSelect class="form-select" @bind-Value="Schedule.FacilityId">
+                                <!-- CORREZIONE: Usa select normale -->
+                                <select class="form-select" @bind="Schedule.FacilityId">
                                     <option value="0">Seleziona sede...</option>
                                     <option value="1">🇮🇹 Milano, Italia</option>
                                     <option value="2">🇧🇷 São Paulo, Brasile</option>
                                     <option value="3">🇻🇳 Ho Chi Minh, Vietnam</option>
-                                </InputSelect>
+                                </select>
                                 <ValidationMessage For="@(() => Schedule.FacilityId)" class="text-danger small" />
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Fase Workflow *</label>
-                                <InputSelect class="form-select" @bind-Value="Schedule.CurrentPhase">
+                                <select class="form-select" @bind="Schedule.CurrentPhase">
                                     <option value="">Seleziona fase...</option>
                                     <option value="Fresa">🔧 Fresa CNC</option>
                                     <option value="Tornio">⚙️ Tornio Automatico</option>
                                     <option value="Assemblaggio">🔩 Linea Assemblaggio</option>
                                     <option value="Test">🧪 Linea Test</option>
-                                </InputSelect>
+                                </select>
                                 <ValidationMessage For="@(() => Schedule.CurrentPhase)" class="text-danger small" />
                             </div>
                         </div>
@@ -54,26 +56,26 @@
                         <div class="row mb-3">
                             <div class="col-md-4">
                                 <label class="form-label">Stato</label>
-                                <InputSelect class="form-select" @bind-Value="Schedule.Status">
+                                <select class="form-select" @bind="Schedule.Status">
                                     <option value="Scheduled">📅 Programmato</option>
                                     <option value="InProgress">⚡ In Produzione</option>
                                     <option value="Completed">✅ Completato</option>
                                     <option value="Delayed">⏰ In Ritardo</option>
-                                </InputSelect>
+                                </select>
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label">Progresso (%)</label>
-                                <InputNumber class="form-control" @bind-Value="Schedule.Progress" min="0" max="100" />
+                                <input type="number" class="form-control" @bind="Schedule.Progress" min="0" max="100" />
                                 <ValidationMessage For="@(() => Schedule.Progress)" class="text-danger small" />
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label">Data Programmata</label>
-                                <InputDate class="form-control" @bind-Value="scheduledDateInput" />
+                                <input type="date" class="form-control" @bind="scheduledDateInput" />
                             </div>
                         </div>
 
                         <div class="d-flex justify-content-end gap-2">
-                            <button type="button" class="btn btn-secondary" @onclick="@(() => OnCancel.InvokeAsync())">
+                            <button type="button" class="btn btn-secondary" @onclick="HandleCancel">
                                 <i class="fas fa-times me-2"></i>
                                 Annulla
                             </button>
@@ -98,19 +100,21 @@
 }
 
 @code {
-    // CORREZIONE: Parameter standard invece di bind personalizzato
+    private bool _disposed = false;
+    private bool isSaving = false;
+    private DateTime? scheduledDateInput = null;
+
     [Parameter] public bool Show { get; set; }
     [Parameter] public ProductionScheduleModel Schedule { get; set; } = new();
     [Parameter] public bool IsEditMode { get; set; }
     [Parameter] public EventCallback<ProductionScheduleModel> OnSave { get; set; }
     [Parameter] public EventCallback OnCancel { get; set; }
 
-    private bool isSaving = false;
-    private DateTime? scheduledDateInput = null;
-
     protected override void OnParametersSet()
     {
-        if (!string.IsNullOrEmpty(Schedule.ScheduledDate))
+        if (_disposed) return;
+
+        if (!string.IsNullOrEmpty(Schedule?.ScheduledDate))
         {
             try
             {
@@ -129,23 +133,55 @@
 
     private async Task HandleSave()
     {
-        isSaving = true;
-        StateHasChanged();
+        if (_disposed) return;
 
+        isSaving = true;
+        
         try
         {
+            StateHasChanged();
+
             // Converti data input a string
             if (scheduledDateInput.HasValue)
             {
                 Schedule.ScheduledDate = scheduledDateInput.Value.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
             }
 
-            await OnSave.InvokeAsync(Schedule);
+            if (!_disposed)
+            {
+                await OnSave.InvokeAsync(Schedule);
+            }
+        }
+        catch (ObjectDisposedException)
+        {
+            // Ignora se il componente è già stato disposto
         }
         finally
         {
-            isSaving = false;
-            StateHasChanged();
+            if (!_disposed)
+            {
+                isSaving = false;
+                StateHasChanged();
+            }
         }
+    }
+
+    private async Task HandleCancel()
+    {
+        if (_disposed) return;
+
+        try
+        {
+            await OnCancel.InvokeAsync();
+        }
+        catch (ObjectDisposedException)
+        {
+            // Ignora se il componente è già stato disposto
+        }
+    }
+
+    public void Dispose()
+    {
+        _disposed = true;
     }
 }

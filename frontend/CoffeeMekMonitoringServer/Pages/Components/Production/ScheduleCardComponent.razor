@@ -1,15 +1,16 @@
 @using ProductionScheduleModel = CoffeeMekMonitoringServer.Models.ProductionSchedule
 @using CoffeeMekMonitoringServer.Helpers
+@implements IDisposable
 
 <div class="card border-0 shadow-sm h-100 hover-shadow">
     <div class="card-header bg-light border-0">
         <div class="d-flex align-items-center justify-content-between">
             <h6 class="mb-0 fw-bold">
-                <i class="@ProductionHelper.GetPhaseIcon(Schedule.CurrentPhase) me-2"></i>
-                @Schedule.CurrentPhase
+                <i class="@ProductionHelper.GetPhaseIcon(Schedule?.CurrentPhase) me-2"></i>
+                @(Schedule?.CurrentPhase ?? "N/A")
             </h6>
-            <span class="badge bg-@ProductionHelper.GetStatusBadge(Schedule.Status)">
-                @ProductionHelper.GetStatusIcon(Schedule.Status) @Schedule.Status.ToUpper()
+            <span class="badge bg-@ProductionHelper.GetStatusBadge(Schedule?.Status)">
+                @ProductionHelper.GetStatusIcon(Schedule?.Status) @(Schedule?.Status?.ToUpper() ?? "N/A")
             </span>
         </div>
     </div>
@@ -19,9 +20,9 @@
             <small class="text-muted d-block mb-1">
                 <i class="fas fa-box me-2"></i>Lotto CoffeeMek:
             </small>
-            <span class="fw-bold">@(Schedule.Lot?.Code ?? "N/A")</span>
+            <span class="fw-bold">@(Schedule?.Lot?.Code ?? "N/A")</span>
             <br>
-            <small class="text-muted">@(Schedule.Lot?.Description ?? "Macchine da caffè")</small>
+            <small class="text-muted">@(Schedule?.Lot?.Description ?? "Macchine da caffè")</small>
         </div>
 
         <!-- Sede con Fuso Orario -->
@@ -30,13 +31,13 @@
                 <i class="fas fa-building me-2"></i>Sede Produttiva:
             </small>
             <span class="fw-bold">
-                @ProductionHelper.GetFacilityFlag(Schedule.Facility?.Location) @(Schedule.Facility?.Name ?? "N/A")
+                @ProductionHelper.GetFacilityFlag(Schedule?.Facility?.Location) @(Schedule?.Facility?.Name ?? "N/A")
             </span>
             <br>
             <small class="text-muted">
                 <i class="fas fa-clock me-1"></i>
-                @ProductionHelper.GetLocalTime(Schedule.Facility?.TimeZone ?? "0") 
-                (UTC@(Schedule.Facility?.TimeZone ?? "0"))
+                @ProductionHelper.GetLocalTime(Schedule?.Facility?.TimeZone ?? "0") 
+                (UTC@(Schedule?.Facility?.TimeZone ?? "0"))
             </small>
         </div>
 
@@ -44,11 +45,11 @@
         <div class="mb-3">
             <div class="d-flex justify-content-between mb-1">
                 <small class="text-muted">Progresso Workflow:</small>
-                <small class="fw-bold">@Schedule.Progress%</small>
+                <small class="fw-bold">@(Schedule?.Progress ?? 0)%</small>
             </div>
             <div class="progress" style="height: 8px;">
-                <div class="progress-bar bg-@ProductionHelper.GetProgressColor(Schedule.Progress) @(Schedule.Status == "InProgress" ? "progress-bar-animated progress-bar-striped" : "")" 
-                     style="width: @Schedule.Progress%"></div>
+                <div class="progress-bar bg-@ProductionHelper.GetProgressColor(Schedule?.Progress ?? 0) @(Schedule?.Status == "InProgress" ? "progress-bar-animated progress-bar-striped" : "")" 
+                     style="width: @(Schedule?.Progress ?? 0)%"></div>
             </div>
         </div>
 
@@ -58,28 +59,28 @@
                 <small class="text-muted d-block mb-1">
                     <i class="fas fa-calendar me-2"></i>Programmato:
                 </small>
-                <span class="fw-bold">@ProductionHelper.FormatDate(Schedule.ScheduledDate)</span>
+                <span class="fw-bold">@ProductionHelper.FormatDate(Schedule?.ScheduledDate)</span>
             </div>
             <div class="col-6">
                 <small class="text-muted d-block mb-1">
                     <i class="fas fa-flag-checkered me-2"></i>Consegna:
                 </small>
-                <span class="fw-bold text-@(ProductionHelper.IsOverdue(Schedule.EndDate) ? "danger" : "success")">
-                    @ProductionHelper.FormatDate(Schedule.EndDate)
+                <span class="fw-bold text-@(ProductionHelper.IsOverdue(Schedule?.EndDate) ? "danger" : "success")">
+                    @ProductionHelper.FormatDate(Schedule?.EndDate)
                 </span>
             </div>
         </div>
     </div>
     <div class="card-footer bg-light border-0">
         <div class="d-flex justify-content-between">
-            <button class="btn btn-outline-info btn-sm" @onclick="@(() => OnViewTelemetry.InvokeAsync(Schedule.Id))">
+            <button class="btn btn-outline-info btn-sm" @onclick="HandleViewTelemetry">
                 <i class="fas fa-chart-line me-1"></i>Telemetria
             </button>
             <div class="btn-group btn-group-sm">
-                <button class="btn btn-outline-primary" @onclick="@(() => OnEdit.InvokeAsync(Schedule.Id))">
+                <button class="btn btn-outline-primary" @onclick="HandleEdit">
                     <i class="fas fa-edit"></i>
                 </button>
-                <button class="btn btn-outline-danger" @onclick="@(() => OnDelete.InvokeAsync((Schedule.Id, Schedule.Lot?.Code ?? "Sconosciuto")))">
+                <button class="btn btn-outline-danger" @onclick="HandleDelete">
                     <i class="fas fa-trash"></i>
                 </button>
             </div>
@@ -88,8 +89,59 @@
 </div>
 
 @code {
-    [Parameter] public ProductionScheduleModel Schedule { get; set; } = new();
+    private bool _disposed = false;
+
+    [Parameter] public ProductionScheduleModel? Schedule { get; set; }
     [Parameter] public EventCallback<int> OnEdit { get; set; }
     [Parameter] public EventCallback<(int Id, string Code)> OnDelete { get; set; }
     [Parameter] public EventCallback<int> OnViewTelemetry { get; set; }
+
+    // CORREZIONE: Handlers protetti da dispose
+    private async Task HandleViewTelemetry()
+    {
+        if (_disposed || Schedule == null) return;
+        
+        try
+        {
+            await OnViewTelemetry.InvokeAsync(Schedule.Id);
+        }
+        catch (ObjectDisposedException)
+        {
+            // Ignora se il componente è già stato disposto
+        }
+    }
+
+    private async Task HandleEdit()
+    {
+        if (_disposed || Schedule == null) return;
+        
+        try
+        {
+            await OnEdit.InvokeAsync(Schedule.Id);
+        }
+        catch (ObjectDisposedException)
+        {
+            // Ignora se il componente è già stato disposto
+        }
+    }
+
+    private async Task HandleDelete()
+    {
+        if (_disposed || Schedule == null) return;
+        
+        try
+        {
+            var code = Schedule.Lot?.Code ?? "Sconosciuto";
+            await OnDelete.InvokeAsync((Schedule.Id, code));
+        }
+        catch (ObjectDisposedException)
+        {
+            // Ignora se il componente è già stato disposto
+        }
+    }
+
+    public void Dispose()
+    {
+        _disposed = true;
+    }
 }

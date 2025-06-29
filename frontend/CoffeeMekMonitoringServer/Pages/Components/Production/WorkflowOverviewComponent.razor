@@ -1,54 +1,60 @@
 @using ProductionScheduleModel = CoffeeMekMonitoringServer.Models.ProductionSchedule
+@implements IDisposable
 
-<div class="row mb-4">
-    <div class="col-12">
-        <div class="card border-0 shadow-sm">
-            <div class="card-header bg-success text-white border-0">
-                <h6 class="mb-0">
-                    <i class="fas fa-cogs me-2"></i>
-                    Workflow CoffeeMek - Monitoraggio Tempo Reale
-                </h6>
-            </div>
-            <div class="card-body">
-                <div class="row">
-                    @foreach (var phase in GetWorkflowPhases())
-                    {
-                        var phaseData = GetPhaseData(phase.Key);
-                        
-                        <div class="col-md-3 text-center position-relative">
-                            <div class="card border-0 bg-light h-100">
-                                <div class="card-body">
-                                    <i class="@phase.Value.Icon fa-3x text-@phase.Value.Color mb-3"></i>
-                                    <h6 class="mb-2">@phase.Value.Name</h6>
-                                    <span class="badge bg-@phase.Value.Color fs-6">
-                                        @phaseData.Active/@phaseData.Total Lotti
-                                    </span>
-                                    <div class="progress mt-2" style="height: 6px;">
-                                        <div class="progress-bar bg-@phase.Value.Color" 
-                                             style="width: @phaseData.Percentage%"></div>
-                                    </div>
-                                    <small class="text-muted d-block mt-1">
-                                        @phase.Value.Description
-                                    </small>
-                                </div>
-                            </div>
+@if (!_disposed)
+{
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-success text-white border-0">
+                    <h6 class="mb-0">
+                        <i class="fas fa-cogs me-2"></i>
+                        Workflow CoffeeMek - Monitoraggio Tempo Reale
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        @foreach (var phase in GetWorkflowPhases())
+                        {
+                            var phaseData = GetPhaseData(phase.Key);
                             
-                            @if (phase.Key != "Test")
-                            {
-                                <div class="d-none d-md-block position-absolute" 
-                                     style="right: -15px; top: 50%; transform: translateY(-50%);">
-                                    <i class="fas fa-arrow-right fa-2x text-primary"></i>
+                            <div class="col-md-3 text-center position-relative">
+                                <div class="card border-0 bg-light h-100">
+                                    <div class="card-body">
+                                        <i class="@phase.Value.Icon fa-3x text-@phase.Value.Color mb-3"></i>
+                                        <h6 class="mb-2">@phase.Value.Name</h6>
+                                        <span class="badge bg-@phase.Value.Color fs-6">
+                                            @phaseData.Active/@phaseData.Total Lotti
+                                        </span>
+                                        <div class="progress mt-2" style="height: 6px;">
+                                            <div class="progress-bar bg-@phase.Value.Color" 
+                                                 style="width: @phaseData.Percentage%"></div>
+                                        </div>
+                                        <small class="text-muted d-block mt-1">
+                                            @phase.Value.Description
+                                        </small>
+                                    </div>
                                 </div>
-                            }
-                        </div>
-                    }
+                                
+                                @if (phase.Key != "Test")
+                                {
+                                    <div class="d-none d-md-block position-absolute" 
+                                         style="right: -15px; top: 50%; transform: translateY(-50%);">
+                                        <i class="fas fa-arrow-right fa-2x text-primary"></i>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
+}
 
 @code {
+    private bool _disposed = false;
+
     [Parameter] public List<ProductionScheduleModel> Schedules { get; set; } = new();
 
     private Dictionary<string, (string Name, string Icon, string Color, string Description)> GetWorkflowPhases()
@@ -64,10 +70,18 @@
 
     private (int Active, int Total, double Percentage) GetPhaseData(string phase)
     {
+        if (_disposed || Schedules == null)
+            return (0, 0, 0);
+
         var total = Schedules.Count(s => s.CurrentPhase == phase);
         var active = Schedules.Count(s => s.CurrentPhase == phase && s.Status == "InProgress");
         var percentage = total > 0 ? Math.Round((double)active / total * 100, 1) : 0;
         
         return (active, total, percentage);
+    }
+
+    public void Dispose()
+    {
+        _disposed = true;
     }
 }
