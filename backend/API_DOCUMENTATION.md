@@ -2,6 +2,30 @@
 
 This document provides detailed information about the Kaffeio API endpoints, request/response formats, and authentication requirements.
 
+## Standard Response Format
+
+All API responses follow this standard format:
+
+```json
+{
+    "success": true,
+    "data": [], // Contains the actual response data
+    "timestamp": "2025-06-29T10:03:53.602Z", // ISO timestamp of when the response was generated
+    "path": "/api/endpoint" // The API endpoint that was called
+}
+```
+
+In case of errors, the response will have `success: false` and include an error message:
+
+```json
+{
+    "success": false,
+    "message": "Error description",
+    "timestamp": "2025-06-29T10:03:53.602Z",
+    "path": "/api/endpoint"
+}
+```
+
 ## Table of Contents
 
 - [Authentication](#authentication)
@@ -34,10 +58,15 @@ POST /api/auth/register
 **Response:**
 ```json
 {
-  "id": 1,
-  "email": "user@example.com",
-  "firstName": "John",
-  "lastName": "Doe"
+  "success": true,
+  "data": {
+    "id": 1,
+    "email": "user@example.com",
+    "firstName": "John",
+    "lastName": "Doe"
+  },
+  "timestamp": "2025-06-29T10:03:53.602Z",
+  "path": "/api/auth/register"
 }
 ```
 
@@ -58,13 +87,18 @@ POST /api/auth/login
 **Response:**
 ```json
 {
-  "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-  "user": {
-    "id": 1,
-    "email": "user@example.com",
-    "firstName": "John",
-    "lastName": "Doe"
-  }
+  "success": true,
+  "data": {
+    "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+    "user": {
+      "id": 1,
+      "email": "user@example.com",
+      "firstName": "John",
+      "lastName": "Doe"
+    }
+  },
+  "timestamp": "2025-06-29T10:03:53.602Z",
+  "path": "/api/auth/login"
 }
 ```
 
@@ -83,20 +117,25 @@ Authorization: Bearer <access_token>
 
 **Response:**
 ```json
-[
-  {
-    "id": 1,
-    "email": "user@example.com",
-    "firstName": "John",
-    "lastName": "Doe"
-  },
-  {
-    "id": 2,
-    "email": "user2@example.com",
-    "firstName": "Jane",
-    "lastName": "Smith"
-  }
-]
+{
+  "success": true,
+  "data": [
+    {
+      "id": 1,
+      "email": "user@example.com",
+      "firstName": "John",
+      "lastName": "Doe"
+    },
+    {
+      "id": 2,
+      "email": "user2@example.com",
+      "firstName": "Jane",
+      "lastName": "Smith"
+    }
+  ],
+  "timestamp": "2025-06-29T10:03:53.602Z",
+  "path": "/api/users"
+}
 ```
 
 ### Get User by ID
@@ -113,10 +152,15 @@ Authorization: Bearer <access_token>
 **Response:**
 ```json
 {
-  "id": 1,
-  "email": "user@example.com",
-  "firstName": "John",
-  "lastName": "Doe"
+  "success": true,
+  "data": {
+    "id": 1,
+    "email": "user@example.com",
+    "firstName": "John",
+    "lastName": "Doe"
+  },
+  "timestamp": "2025-06-29T10:03:53.602Z",
+  "path": "/api/auth/register"
 }
 ```
 
@@ -194,7 +238,12 @@ Authorization: Bearer <access_token>
 **Response:**
 ```json
 {
-  "message": "User with ID 1 has been deleted"
+  "success": true,
+  "data": {
+    "message": "User with ID 1 has been deleted"
+  },
+  "timestamp": "2025-06-29T10:03:53.602Z",
+  "path": "/api/users/1"
 }
 ```
 
@@ -324,7 +373,12 @@ Authorization: Bearer <access_token>
 **Response:**
 ```json
 {
-  "message": "Facility with ID 1 has been deleted"
+  "success": true,
+  "data": {
+    "message": "Facility with ID 1 has been deleted"
+  },
+  "timestamp": "2025-06-29T10:03:53.602Z",
+  "path": "/api/facilities/1"
 }
 ```
 
@@ -567,7 +621,12 @@ Authorization: Bearer <access_token>
 **Response:**
 ```json
 {
-  "message": "Machine with ID 1 has been deleted"
+  "success": true,
+  "data": {
+    "message": "Machine with ID 1 has been deleted"
+  },
+  "timestamp": "2025-06-29T10:03:53.602Z",
+  "path": "/api/machines/1"
 }
 ```
 

@@ -1,5 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
 import { Machine } from './machine.entity';
+import { Order } from './order.entity';
 
 @Entity('Lots')
 export class Lot {
@@ -21,4 +22,11 @@ export class Lot {
     @ManyToOne(() => Machine, { nullable: true })
     @JoinColumn({ name: 'CurrentMachineId' })
     CurrentMachine: Machine;
+
+    @Column({ nullable: true })
+    orderId: number;
+
+    @ManyToOne(() => Order, order => order.lots, { nullable: true })
+    @JoinColumn({ name: 'orderId' })
+    order: Order;
 }

@@ -9,6 +9,9 @@ import { FacilityModule } from './facility.module';
 import { LotModule } from './lot.module';
 import { MachineModule } from './machine.module';
 import { TelemetryModule } from './telemetry.module';
+import { CustomerModule } from './customer.module';
+import { OrderModule } from './order.module';
+import { ProductionScheduleModule } from './production-schedule.module';
 
 @Module({
   imports: [
@@ -33,7 +36,10 @@ import { TelemetryModule } from './telemetry.module';
     FacilityModule,
     LotModule,
     MachineModule,
-    TelemetryModule
+    TelemetryModule,
+    CustomerModule,
+    OrderModule,
+    ProductionScheduleModule
   ],
   controllers: [],
   providers: [],
