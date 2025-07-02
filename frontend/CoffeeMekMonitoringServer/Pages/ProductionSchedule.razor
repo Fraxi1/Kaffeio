@@ -1,0 +1,289 @@
+@page "/production-schedule"
+@using CoffeeMekMonitoringServer.Services.Interfaces
+@using CoffeeMekMonitoringServer.Pages.Components.Production
+@using ProductionScheduleModel = CoffeeMekMonitoringServer.Models.ProductionSchedule
+@inject IProductionScheduleService ScheduleService
+@inject IJSRuntime JSRuntime
+@inject NavigationManager NavigationManager
+
+<PageTitle>Schedulazione Produzione - CoffeeMek S.p.A.</PageTitle>
+
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col">
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <h2 class="mb-1">
+                        <i class="fas fa-calendar-alt text-primary me-3"></i>
+                        Schedulazione Produzione CoffeeMek S.p.A.
+                    </h2>
+                    <p class="text-muted mb-0">
+                        <i class="fas fa-coffee me-2"></i>
+                        Workflow: Fresa CNC → Tornio → Assemblaggio → Test
+                    </p>
+                </div>
+                <div class="d-flex gap-2">
+                    <a href="/" class="btn btn-outline-primary">
+                        <i class="fas fa-home me-2"></i>
+                        Dashboard
+                    </a>
+                    <button class="btn btn-success" @onclick="ShowCreateModal">
+                        <i class="fas fa-plus me-2"></i>
+                        Nuova Schedulazione
+                    </button>
+                    <button class="btn btn-outline-secondary" @onclick="LoadSchedules">
+                        <i class="fas fa-sync-alt me-2"></i>
+                        Aggiorna
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CORREZIONE: Filtri con EventCallback invece di bind personalizzato -->
+    <ProductionFiltersComponent FacilityId="@selectedFacilityId" 
+                               FacilityIdChanged="@((int value) => { selectedFacilityId = value; ApplyFilters(); })"
+                               Phase="@selectedPhase"
+                               PhaseChanged="@((string value) => { selectedPhase = value; ApplyFilters(); })"
+                               Status="@selectedStatus"
+                               StatusChanged="@((string value) => { selectedStatus = value; ApplyFilters(); })"
+                               OnFiltersChanged="@ApplyFilters" />
+
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="/" class="text-decoration-none">
+                    <i class="fas fa-home me-1"></i>Dashboard
+                </a>
+            </li>
+            <li class="breadcrumb-item">
+                <span class="text-muted">Produzione</span>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">
+                <i class="fas fa-calendar-alt me-1"></i>Schedulazione
+            </li>
+        </ol>
+    </nav>
+
+    <!-- Loading/Error States -->
+    @if (isLoading)
+    {
+        <LoadingComponent Message="Caricamento schedulazioni CoffeeMek..." />
+    }
+    else if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <ErrorComponent Message="@errorMessage" OnRetry="@LoadSchedules" />
+    }
+    else if (filteredSchedules.Any())
+    {
+        <!-- Workflow Overview -->
+        <WorkflowOverviewComponent Schedules="@filteredSchedules" />
+
+        <!-- Facility Status -->
+        <FacilityStatusComponent Schedules="@filteredSchedules" />
+
+        <!-- Schedules Grid -->
+        <div class="row">
+            @foreach (var schedule in filteredSchedules)
+            {
+                <div class="col-lg-6 col-xl-4 mb-4">
+                    <ScheduleCardComponent Schedule="@schedule" 
+                                         OnEdit="@EditSchedule"
+                                         OnDelete="@DeleteScheduleWrapper"
+                                         OnViewTelemetry="@ViewTelemetry" />
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <EmptyStateComponent OnCreateNew="@ShowCreateModal" 
+                           HasFilters="@(selectedFacilityId > 0 || !string.IsNullOrEmpty(selectedPhase) || !string.IsNullOrEmpty(selectedStatus))"
+                           OnClearFilters="@ClearFilters" />
+    }
+</div>
+
+<!-- CORREZIONE: Modal con Show/Hide invece di bind personalizzato -->
+@if (showModal)
+{
+    <ScheduleModalComponent Show="@showModal"
+                          Schedule="@modalSchedule"
+                          IsEditMode="@isEditMode"
+                          OnSave="@SaveSchedule"
+                          OnCancel="@HideModal" />
+}
+
+@code {
+    // State variables per CoffeeMek
+    private List<ProductionScheduleModel> schedules = new();
+    private List<ProductionScheduleModel> filteredSchedules = new();
+    private bool isLoading = true;
+    private string errorMessage = string.Empty;
+    
+    // Filtri Multi-Sede CoffeeMek
+    private int selectedFacilityId = 0;
+    private string selectedPhase = string.Empty;
+    private string selectedStatus = string.Empty;
+    
+    // Modal state
+    private bool showModal = false;
+    private bool isEditMode = false;
+    private ProductionScheduleModel modalSchedule = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadSchedules();
+    }
+
+    private async Task LoadSchedules()
+    {
+        isLoading = true;
+        errorMessage = string.Empty;
+        StateHasChanged();
+
+        try
+        {
+            var result = await ScheduleService.GetAllSchedulesAsync();
+            if (result.IsSuccess && result.Data != null)
+            {
+                schedules = result.Data;
+                ApplyFilters();
+            }
+            else
+            {
+                errorMessage = result.ErrorMessage ?? "Errore nel caricamento delle schedulazioni CoffeeMek dal cloud";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Errore connessione cloud Azure: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private void ApplyFilters()
+    {
+        filteredSchedules = schedules.Where(s =>
+            (selectedFacilityId == 0 || s.FacilityId == selectedFacilityId) &&
+            (string.IsNullOrEmpty(selectedPhase) || s.CurrentPhase.Equals(selectedPhase, StringComparison.OrdinalIgnoreCase)) &&
+            (string.IsNullOrEmpty(selectedStatus) || s.Status.Equals(selectedStatus, StringComparison.OrdinalIgnoreCase))
+        ).OrderBy(s => s.ScheduledDate).ToList();
+        
+        StateHasChanged();
+    }
+
+    private void ClearFilters()
+    {
+        selectedFacilityId = 0;
+        selectedPhase = string.Empty;
+        selectedStatus = string.Empty;
+        ApplyFilters();
+    }
+
+    private void ShowCreateModal()
+    {
+        modalSchedule = new ProductionScheduleModel();
+        isEditMode = false;
+        showModal = true;
+    }
+
+    private async Task EditSchedule(int scheduleId)
+    {
+        try
+        {
+            var result = await ScheduleService.GetScheduleByIdAsync(scheduleId);
+            if (result.IsSuccess && result.Data != null)
+            {
+                modalSchedule = result.Data;
+                isEditMode = true;
+                showModal = true;
+            }
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Errore caricamento schedulazione CoffeeMek: {ex.Message}");
+        }
+    }
+
+    private async Task DeleteScheduleWrapper((int Id, string Code) data)
+    {
+        await DeleteSchedule(data.Id, data.Code);
+    }
+
+    private async Task DeleteSchedule(int scheduleId, string lotCode)
+    {
+        var confirmed = await JSRuntime.InvokeAsync<bool>("confirm", 
+            $"Eliminare schedulazione CoffeeMek per lotto '{lotCode}'?\n\nQuesta azione eliminerà tutti i dati di telemetria e non può essere annullata.");
+        
+        if (confirmed)
+        {
+            try
+            {
+                var result = await ScheduleService.DeleteScheduleAsync(scheduleId);
+                if (result.IsSuccess)
+                {
+                    await LoadSchedules();
+                    await JSRuntime.InvokeVoidAsync("alert", "Schedulazione CoffeeMek eliminata con successo!");
+                }
+                else
+                {
+                    await JSRuntime.InvokeVoidAsync("alert", $"Errore eliminazione: {result.ErrorMessage}");
+                }
+            }
+            catch (Exception ex)
+            {
+                await JSRuntime.InvokeVoidAsync("alert", $"Errore cloud: {ex.Message}");
+            }
+        }
+    }
+
+    private void ViewTelemetry(int scheduleId)
+    {
+        NavigationManager.NavigateTo($"/telemetry?schedule={scheduleId}");
+    }
+
+    private async Task SaveSchedule(ProductionScheduleModel schedule)
+    {
+        try
+        {
+            CoffeeMekMonitoringServer.Models.ApiResponse<ProductionScheduleModel> result;
+            if (isEditMode)
+            {
+                result = await ScheduleService.UpdateScheduleAsync(schedule.Id, schedule);
+            }
+            else
+            {
+                result = await ScheduleService.CreateScheduleAsync(schedule);
+            }
+
+            if (result.IsSuccess)
+            {
+                await LoadSchedules();
+                HideModal();
+                await JSRuntime.InvokeVoidAsync("alert", 
+                    isEditMode ? "Schedulazione CoffeeMek modificata!" : "Schedulazione CoffeeMek creata!");
+            }
+            else
+            {
+                await JSRuntime.InvokeVoidAsync("alert", $"Errore salvataggio: {result.ErrorMessage}");
+            }
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Errore cloud: {ex.Message}");
+        }
+    }
+
+    private void HideModal()
+    {
+        showModal = false;
+        modalSchedule = new ProductionScheduleModel();
+        isEditMode = false;
+    }
+}

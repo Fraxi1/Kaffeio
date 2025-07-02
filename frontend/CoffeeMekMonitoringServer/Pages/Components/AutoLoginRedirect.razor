@@ -1,0 +1,39 @@
+@using CoffeeMekMonitoringServer.Services.Interfaces
+@inject IAuthenticationService AuthService
+@inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
+
+<!-- Componente invisibile per auto-login automatico -->
+<div style="display: none;">
+    Auto-login in progress...
+</div>
+
+@code {
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            // Controlla se già autenticato
+            if (await AuthService.IsAuthenticatedAsync())
+            {
+                return; // Già autenticato, non fare nulla
+            }
+
+            // Esegui auto-login silenzioso
+            try
+            {
+                var result = await AuthService.LoginAsync("", "");
+                if (result.IsSuccess)
+                {
+                    // Login riuscito, rimani sulla pagina corrente
+                    await InvokeAsync(StateHasChanged);
+                }
+            }
+            catch (Exception)
+            {
+                // Se fallisce, redirect alla pagina di auto-login
+                Navigation.NavigateTo("/auto-login", true);
+            }
+        }
+    }
+}

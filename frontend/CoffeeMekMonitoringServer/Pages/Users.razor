@@ -1,0 +1,264 @@
+@page "/users"
+@using CoffeeMekMonitoringServer.Models
+@using CoffeeMekMonitoringServer.Services.Interfaces
+@inject IUserService UserService
+
+<PageTitle>Utenti - Kaffeio</PageTitle>
+
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col">
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <h2 class="mb-1">
+                        <i class="fas fa-users text-primary me-3"></i>
+                        Utenti Sistema
+                    </h2>
+                    <p class="text-muted mb-0">Lista degli utenti registrati nel sistema Kaffeio</p>
+                </div>
+                <div class="d-flex gap-2">
+                    <a href="/" class="btn btn-outline-primary">
+                        <i class="fas fa-home me-2"></i>
+                        Dashboard
+                    </a>
+                    <button class="btn btn-outline-secondary" @onclick="LoadUsers">
+                        <i class="fas fa-sync-alt me-2"></i>
+                        Aggiorna
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Breadcrumb di Navigazione -->
+    <div class="row mb-3">
+        <div class="col">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item">
+                        <a href="/" class="text-decoration-none">
+                            <i class="fas fa-home me-1"></i>
+                            Dashboard
+                        </a>
+                    </li>
+                    <li class="breadcrumb-item">
+                        <span class="text-muted">Amministrazione</span>
+                    </li>
+                    <li class="breadcrumb-item active" aria-current="page">
+                        <i class="fas fa-users me-1"></i>
+                        Utenti
+                    </li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    @if (isLoading)
+    {
+        <div class="row">
+            <div class="col-12">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body text-center py-5">
+                        <div class="spinner-border text-primary mb-3" role="status">
+                            <span class="visually-hidden">Caricamento...</span>
+                        </div>
+                        <h5 class="text-muted">Caricamento utenti in corso...</h5>
+                        <p class="text-muted mb-0">Connessione all'API Kaffeio</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+    else if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="row">
+            <div class="col-12">
+                <div class="alert alert-danger border-0 shadow-sm" role="alert">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-exclamation-triangle fa-2x me-3"></i>
+                        <div class="flex-grow-1">
+                            <h5 class="alert-heading mb-1">Errore nel caricamento</h5>
+                            <p class="mb-2">@errorMessage</p>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-outline-danger btn-sm" @onclick="LoadUsers">
+                                    <i class="fas fa-redo me-2"></i>
+                                    Riprova
+                                </button>
+                                <a href="/" class="btn btn-outline-secondary btn-sm">
+                                    <i class="fas fa-home me-2"></i>
+                                    Torna alla Dashboard
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+    else if (users.Any())
+    {
+        <div class="row">
+            <div class="col-12">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-primary text-white border-0">
+                        <div class="row align-items-center">
+                            <div class="col">
+                                <h5 class="mb-0">
+                                    <i class="fas fa-list me-2"></i>
+                                    Lista Utenti
+                                </h5>
+                            </div>
+                            <div class="col-auto">
+                                <span class="badge bg-light text-primary">
+                                    @users.Count @(users.Count == 1 ? "utente" : "utenti")
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="list-group list-group-flush">
+                            @foreach (var user in users)
+                            {
+                                <div class="list-group-item border-0 py-3">
+                                    <div class="row align-items-center">
+                                        <div class="col-auto">
+                                            <div class="avatar bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" 
+                                                 style="width: 50px; height: 50px;">
+                                                <i class="fas fa-user"></i>
+                                            </div>
+                                        </div>
+                                        <div class="col">
+                                            <div class="d-flex align-items-center justify-content-between">
+                                                <div>
+                                                    <h6 class="mb-1 fw-bold">
+                                                        @user.FullName
+                                                    </h6>
+                                                    <p class="text-muted mb-1">
+                                                        <i class="fas fa-envelope me-2"></i>
+                                                        @user.Email
+                                                    </p>
+                                                    <div class="d-flex align-items-center text-muted">
+                                                        <small class="me-3">
+                                                            <i class="fas fa-hashtag me-1"></i>
+                                                            ID: @user.Id
+                                                        </small>
+                                                        @if (!string.IsNullOrEmpty(user.CreatedAt))
+                                                        {
+                                                            <small>
+                                                                <i class="fas fa-calendar me-1"></i>
+                                                                @try
+                                                                {
+                                                                    var date = DateTime.Parse(user.CreatedAt);
+                                                                    @date.ToString("dd/MM/yyyy")
+                                                                }
+                                                                catch
+                                                                {
+                                                                    @user.CreatedAt
+                                                                }
+                                                            </small>
+                                                        }
+                                                    </div>
+                                                </div>
+                                                <div class="text-end">
+                                                    <span class="badge bg-success">
+                                                        <i class="fas fa-check me-1"></i>
+                                                        Attivo
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                    <div class="card-footer bg-light border-0">
+                        <div class="row align-items-center text-muted">
+                            <div class="col">
+                                <small>
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    Ultimo aggiornamento: @DateTime.Now.ToString("dd/MM/yyyy HH:mm")
+                                </small>
+                            </div>
+                            <div class="col-auto">
+                                <small>
+                                    <i class="fas fa-server me-2"></i>
+                                    API Kaffeio
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="row">
+            <div class="col-12">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body text-center py-5">
+                        <div class="mb-4">
+                            <i class="fas fa-users fa-4x text-muted"></i>
+                        </div>
+                        <h4 class="text-muted mb-3">Nessun utente trovato</h4>
+                        <p class="text-muted mb-4">
+                            Non ci sono utenti registrati nel sistema Kaffeio.
+                        </p>
+                        <div class="d-flex justify-content-center gap-2">
+                            <button class="btn btn-primary" @onclick="LoadUsers">
+                                <i class="fas fa-sync-alt me-2"></i>
+                                Ricarica lista
+                            </button>
+                            <a href="/" class="btn btn-outline-secondary">
+                                <i class="fas fa-home me-2"></i>
+                                Torna alla Dashboard
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private List<User> users = new();
+    private bool isLoading = true;
+    private string errorMessage = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadUsers();
+    }
+
+    private async Task LoadUsers()
+    {
+        isLoading = true;
+        errorMessage = string.Empty;
+        StateHasChanged();
+
+        try
+        {
+            var result = await UserService.GetAllUsersAsync();
+            
+            if (result.IsSuccess && result.Data != null)
+            {
+                users = result.Data;
+            }
+            else
+            {
+                errorMessage = result.ErrorMessage ?? "Errore nel caricamento degli utenti";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Errore imprevisto: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+}

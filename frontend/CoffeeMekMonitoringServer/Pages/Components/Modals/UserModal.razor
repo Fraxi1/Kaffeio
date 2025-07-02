@@ -1,0 +1,170 @@
+@using CoffeeMekMonitoringServer.Models
+@using CoffeeMekMonitoringServer.Services.Interfaces
+@inject IUserService UserService
+
+<div class="modal fade @(_isVisible ? "show" : "")" tabindex="-1" style="display: @(_isVisible ? "block" : "none")" aria-hidden="@(!_isVisible)">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">@(_isEditMode ? "Modifica Utente" : "Nuovo Utente")</h5>
+                <button type="button" class="btn-close" @onclick="Cancel" aria-label="Close"></button>
+            </div>
+            
+            <EditForm Model="@_formModel" OnValidSubmit="@HandleValidSubmit">
+                <DataAnnotationsValidator />
+                
+                <div class="modal-body">
+                    @if (!string.IsNullOrEmpty(_errorMessage))
+                    {
+                        <div class="alert alert-danger alert-dismissible fade show">
+                            @_errorMessage
+                            <button type="button" class="btn-close" @onclick="() => _errorMessage = string.Empty"></button>
+                        </div>
+                    }
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Nome *</label>
+                                <InputText @bind-Value="_formModel.FirstName" class="form-control" placeholder="Inserisci il nome" />
+                                <ValidationMessage For="@(() => _formModel.FirstName)" />
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Cognome *</label>
+                                <InputText @bind-Value="_formModel.LastName" class="form-control" placeholder="Inserisci il cognome" />
+                                <ValidationMessage For="@(() => _formModel.LastName)" />
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Email *</label>
+                        <InputText @bind-Value="_formModel.Email" type="email" class="form-control" placeholder="inserisci@email.com" />
+                        <ValidationMessage For="@(() => _formModel.Email)" />
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">
+                            @(_isEditMode ? "Nuova Password (lasciare vuoto per non modificare)" : "Password *")
+                        </label>
+                        <InputText @bind-Value="_formModel.Password" type="password" class="form-control" placeholder="Inserisci la password" />
+                        <ValidationMessage For="@(() => _formModel.Password)" />
+                        @if (_isEditMode)
+                        {
+                            <div class="form-text">Lasciare vuoto per mantenere la password attuale</div>
+                        }
+                    </div>
+                </div>
+                
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="Cancel" disabled="@_isLoading">
+                        Annulla
+                    </button>
+                    <button type="submit" class="btn btn-primary" disabled="@_isLoading">
+                        @if (_isLoading)
+                        {
+                            <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                        }
+                        @(_isEditMode ? "Aggiorna Utente" : "Crea Utente")
+                    </button>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+</div>
+
+@if (_isVisible)
+{
+    <div class="modal-backdrop fade show"></div>
+}
+
+@code {
+    [Parameter] public EventCallback<User> OnUserSaved { get; set; }
+    [Parameter] public EventCallback OnCancel { get; set; }
+
+    private bool _isVisible = false;
+    private bool _isEditMode = false;
+    private bool _isLoading = false;
+    private string _errorMessage = string.Empty;
+    private User _formModel = new();
+
+    public async Task ShowForCreateAsync()
+    {
+        _isEditMode = false;
+        _formModel = new User();
+        _errorMessage = string.Empty;
+        _isVisible = true;
+        StateHasChanged();
+    }
+
+    public async Task ShowForEditAsync(User user)
+    {
+        _isEditMode = true;
+        _formModel = new User
+        {
+            Id = user.Id,
+            FirstName = user.FirstName,
+            LastName = user.LastName,
+            Email = user.Email,
+            Password = string.Empty
+        };
+        _errorMessage = string.Empty;
+        _isVisible = true;
+        StateHasChanged();
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        _isLoading = true;
+        _errorMessage = string.Empty;
+
+        try
+        {
+            ApiResponse<User> response;
+
+            if (_isEditMode)
+            {
+                response = await UserService.UpdateUserAsync(_formModel.Id??0, _formModel);
+            }
+            else
+            {
+                response = await UserService.CreateUserAsync(_formModel);
+            }
+
+            if (response.Success && response.Data != null)
+            {
+                await OnUserSaved.InvokeAsync(response.Data);
+                await CloseModal();
+            }
+            else
+            {
+                _errorMessage = response.ErrorMessage ?? "Errore sconosciuto durante l'operazione";
+            }
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Errore imprevisto: {ex.Message}";
+        }
+        finally
+        {
+            _isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task Cancel()
+    {
+        await OnCancel.InvokeAsync();
+        await CloseModal();
+    }
+
+    private async Task CloseModal()
+    {
+        _isVisible = false;
+        _formModel = new User();
+        _errorMessage = string.Empty;
+        StateHasChanged();
+    }
+}
