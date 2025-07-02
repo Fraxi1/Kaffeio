@@ -1,0 +1,462 @@
+@page "/customers"
+@using CoffeeMekMonitoringServer.Models
+@using CoffeeMekMonitoringServer.Services.Interfaces
+@inject ICustomerService CustomerService
+
+<PageTitle>Clienti - CoffeeMek</PageTitle>
+
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col">
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <h2 class="mb-1">
+                        <i class="fas fa-handshake text-primary me-3"></i>
+                        Gestione Clienti
+                    </h2>
+                    <p class="text-muted mb-0">Gestione clienti globali CoffeeMek - Italia, Brasile, Vietnam</p>
+                </div>
+                <div class="d-flex gap-2">
+                    <a href="/" class="btn btn-outline-primary">
+                        <i class="fas fa-home me-2"></i>
+                        Dashboard
+                    </a>
+                    <button class="btn btn-success" @onclick="ShowCreateModal">
+                        <i class="fas fa-plus me-2"></i>
+                        Nuovo Cliente
+                    </button>
+                    <button class="btn btn-outline-secondary" @onclick="LoadCustomers">
+                        <i class="fas fa-sync-alt me-2"></i>
+                        Aggiorna
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Breadcrumb -->
+    <div class="row mb-3">
+        <div class="col">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item">
+                        <a href="/" class="text-decoration-none">
+                            <i class="fas fa-home me-1"></i>
+                            Dashboard
+                        </a>
+                    </li>
+                    <li class="breadcrumb-item">
+                        <span class="text-muted">Business</span>
+                    </li>
+                    <li class="breadcrumb-item active" aria-current="page">
+                        <i class="fas fa-handshake me-1"></i>
+                        Clienti
+                    </li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    @if (isLoading)
+    {
+        <div class="row">
+            <div class="col-12">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body text-center py-5">
+                        <div class="spinner-border text-primary mb-3" role="status">
+                            <span class="visually-hidden">Caricamento...</span>
+                        </div>
+                        <h5 class="text-muted">Caricamento clienti in corso...</h5>
+                        <p class="text-muted mb-0">Connessione database CoffeeMek</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+    else if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="row">
+            <div class="col-12">
+                <div class="alert alert-danger border-0 shadow-sm" role="alert">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-exclamation-triangle fa-2x me-3"></i>
+                        <div class="flex-grow-1">
+                            <h5 class="alert-heading mb-1">Errore nel caricamento</h5>
+                            <p class="mb-2">@errorMessage</p>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-outline-danger btn-sm" @onclick="LoadCustomers">
+                                    <i class="fas fa-redo me-2"></i>
+                                    Riprova
+                                </button>
+                                <a href="/" class="btn btn-outline-secondary btn-sm">
+                                    <i class="fas fa-home me-2"></i>
+                                    Torna alla Dashboard
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+    else if (customers.Any())
+    {
+        <div class="row">
+            @foreach (var customer in customers)
+            {
+                <div class="col-lg-6 col-xl-4 mb-4">
+                    <div class="card border-0 shadow-sm h-100 hover-shadow">
+                        <div class="card-header bg-light border-0">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <h6 class="mb-0 fw-bold">
+                                    <i class="fas fa-building me-2"></i>
+                                    @customer.Name
+                                </h6>
+                                <span class="badge bg-primary">
+                                    @customer.CountryFlag @customer.Country
+                                </span>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <small class="text-muted d-block mb-1">
+                                    <i class="fas fa-envelope me-2"></i>
+                                    Email:
+                                </small>
+                                <span class="fw-bold">@customer.Email</span>
+                            </div>
+
+                            <div class="mb-3">
+                                <small class="text-muted d-block mb-1">
+                                    <i class="fas fa-phone me-2"></i>
+                                    Telefono:
+                                </small>
+                                <span class="fw-bold">@customer.Phone</span>
+                            </div>
+
+                            <div class="mb-3">
+                                <small class="text-muted d-block mb-1">
+                                    <i class="fas fa-map-marker-alt me-2"></i>
+                                    Indirizzo:
+                                </small>
+                                <span class="fw-bold">@customer.Address</span>
+                            </div>
+
+                            <div class="border-top pt-3">
+                                <small class="text-muted d-block mb-2">
+                                    <i class="fas fa-calendar me-2"></i>
+                                    Cliente dal:
+                                </small>
+                                <span class="fw-bold">
+                                    @if (!string.IsNullOrEmpty(customer.CreatedAt.ToString("yyyy-MM-ddTHH:mm:ss.fffZ")))
+                                    {
+                                        @try
+                                        {
+                                            var date = DateTime.Parse(customer.CreatedAt.ToString("yyyy-MM-ddTHH:mm:ss.fffZ"));
+                                            @date.ToString("dd/MM/yyyy")
+                                        }
+                                        catch
+                                        {
+                                            @customer.CreatedAt
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">Non disponibile</span>
+                                    }
+                                </span>
+                            </div>
+                        </div>
+                        <div class="card-footer bg-light border-0">
+                            <div class="d-flex justify-content-between">
+                                <button class="btn btn-outline-info btn-sm" @onclick="() => ViewCustomerOrders(customer.Id)">
+                                    <i class="fas fa-shopping-cart me-1"></i>
+                                    Ordini
+                                </button>
+                                <div class="btn-group btn-group-sm">
+                                    <button class="btn btn-outline-primary" @onclick="() => EditCustomer(customer.Id)" title="Modifica">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="btn btn-outline-danger" @onclick="() => DeleteCustomer(customer.Id, customer.Name)" title="Elimina">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="row">
+            <div class="col-12">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body text-center py-5">
+                        <div class="mb-4">
+                            <i class="fas fa-handshake fa-4x text-muted"></i>
+                        </div>
+                        <h4 class="text-muted mb-3">Nessun cliente trovato</h4>
+                        <p class="text-muted mb-4">
+                            Non ci sono clienti registrati nel sistema CoffeeMek.
+                        </p>
+                        <div class="d-flex justify-content-center gap-2">
+                            <button class="btn btn-success" @onclick="ShowCreateModal">
+                                <i class="fas fa-plus me-2"></i>
+                                Aggiungi Cliente
+                            </button>
+                            <a href="/" class="btn btn-outline-secondary">
+                                <i class="fas fa-home me-2"></i>
+                                Torna alla Dashboard
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<!-- Modal per Creazione/Modifica -->
+@if (showModal)
+{
+    <div class="modal show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-@(isEditMode ? "edit" : "plus") me-2"></i>
+                        @(isEditMode ? "Modifica Cliente" : "Nuovo Cliente")
+                    </h5>
+                    <button type="button" class="btn-close" @onclick="HideModal"></button>
+                </div>
+                <div class="modal-body">
+                    <EditForm Model="@modalCustomer" OnValidSubmit="@SaveCustomer">
+                        <DataAnnotationsValidator />
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Nome Cliente *</label>
+                                <InputText class="form-control" @bind-Value="modalCustomer.Name" placeholder="Es. Caffè Central Milano" />
+                                <ValidationMessage For="@(() => modalCustomer.Name)" class="text-danger small" />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Email *</label>
+                                <InputText class="form-control" @bind-Value="modalCustomer.Email" placeholder="ordini@cliente.com" />
+                                <ValidationMessage For="@(() => modalCustomer.Email)" class="text-danger small" />
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Telefono</label>
+                                <InputText class="form-control" @bind-Value="modalCustomer.Phone" placeholder="+39 02 1234567" />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Paese</label>
+                                <InputSelect class="form-select" @bind-Value="modalCustomer.Country">
+                                    <option value="">Seleziona paese...</option>
+                                    <option value="Italy">🇮🇹 Italia</option>
+                                    <option value="Brasil">🇧🇷 Brasile</option>
+                                    <option value="Vietnam">🇻🇳 Vietnam</option>
+                                    <option value="Germany">🇩🇪 Germania</option>
+                                    <option value="France">🇫🇷 Francia</option>
+                                    <option value="Spain">🇪🇸 Spagna</option>
+                                    <option value="USA">🇺🇸 Stati Uniti</option>
+                                </InputSelect>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Indirizzo</label>
+                            <InputTextArea class="form-control" @bind-Value="modalCustomer.Address" rows="3" placeholder="Via, città, CAP" />
+                        </div>
+
+                        <div class="d-flex justify-content-end gap-2">
+                            <button type="button" class="btn btn-secondary" @onclick="HideModal">
+                                <i class="fas fa-times me-2"></i>
+                                Annulla
+                            </button>
+                            <button type="submit" class="btn btn-success" disabled="@isSaving">
+                                @if (isSaving)
+                                {
+                                    <span class="spinner-border spinner-border-sm me-2"></span>
+                                    <span>Salvando...</span>
+                                }
+                                else
+                                {
+                                    <i class="fas fa-save me-2"></i>
+                                    <span>Salva Cliente</span>
+                                }
+                            </button>
+                        </div>
+                    </EditForm>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Inject] private IJSRuntime JSRuntime { get; set; } = default!;
+    [Inject] private NavigationManager NavigationManager { get; set; } = default!;
+
+    private List<Customer> customers = new();
+    private bool isLoading = true;
+    private string errorMessage = string.Empty;
+    
+    // Modal state
+    private bool showModal = false;
+    private bool isEditMode = false;
+    private bool isSaving = false;
+    private Customer modalCustomer = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadCustomers();
+    }
+
+    private async Task LoadCustomers()
+    {
+        isLoading = true;
+        errorMessage = string.Empty;
+        StateHasChanged();
+
+        try
+        {
+            var result = await CustomerService.GetAllCustomersAsync();
+            
+            if (result.IsSuccess && result.Data != null)
+            {
+                customers = result.Data;
+            }
+            else
+            {
+                errorMessage = result.ErrorMessage ?? "Errore nel caricamento dei clienti";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Errore imprevisto: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private void ShowCreateModal()
+    {
+        modalCustomer = new Customer();
+        isEditMode = false;
+        showModal = true;
+    }
+
+    private async Task EditCustomer(int customerId)
+    {
+        try
+        {
+            var result = await CustomerService.GetCustomerByIdAsync(customerId);
+            if (result.IsSuccess && result.Data != null)
+            {
+                modalCustomer = new Customer
+                {
+                    Id = result.Data.Id,
+                    Name = result.Data.Name,
+                    Email = result.Data.Email,
+                    Phone = result.Data.Phone,
+                    Address = result.Data.Address,
+                    Country = result.Data.Country
+                };
+                isEditMode = true;
+                showModal = true;
+            }
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Errore: {ex.Message}");
+        }
+    }
+
+    private async Task SaveCustomer()
+    {
+        isSaving = true;
+        StateHasChanged();
+
+        try
+        {
+            ApiResponse<Customer> result;
+            if (isEditMode)
+            {
+                result = await CustomerService.UpdateCustomerAsync(modalCustomer.Id, modalCustomer);
+            }
+            else
+            {
+                result = await CustomerService.CreateCustomerAsync(modalCustomer);
+            }
+
+            if (result.IsSuccess)
+            {
+                HideModal();
+                await LoadCustomers();
+                await JSRuntime.InvokeVoidAsync("alert", 
+                    isEditMode ? "Cliente modificato con successo!" : "Cliente creato con successo!");
+            }
+            else
+            {
+                await JSRuntime.InvokeVoidAsync("alert", $"Errore: {result.ErrorMessage}");
+            }
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Errore: {ex.Message}");
+        }
+        finally
+        {
+            isSaving = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task DeleteCustomer(int customerId, string customerName)
+    {
+        var confirmed = await JSRuntime.InvokeAsync<bool>("confirm", 
+            $"Sei sicuro di voler eliminare il cliente '{customerName}'?\n\nQuesta azione non può essere annullata.");
+        
+        if (confirmed)
+        {
+            try
+            {
+                var result = await CustomerService.DeleteCustomerAsync(customerId);
+                if (result.IsSuccess)
+                {
+                    await LoadCustomers();
+                    await JSRuntime.InvokeVoidAsync("alert", "Cliente eliminato con successo!");
+                }
+                else
+                {
+                    await JSRuntime.InvokeVoidAsync("alert", $"Errore nell'eliminazione: {result.ErrorMessage}");
+                }
+            }
+            catch (Exception ex)
+            {
+                await JSRuntime.InvokeVoidAsync("alert", $"Errore: {ex.Message}");
+            }
+        }
+    }
+
+    private void ViewCustomerOrders(int customerId)
+    {
+        NavigationManager.NavigateTo($"/orders?customer={customerId}");
+    }
+
+    private void HideModal()
+    {
+        showModal = false;
+        modalCustomer = new Customer();
+        isEditMode = false;
+        isSaving = false;
+    }
+}

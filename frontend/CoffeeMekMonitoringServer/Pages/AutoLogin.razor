@@ -1,0 +1,143 @@
+@page "/auto-login"
+@using CoffeeMekMonitoringServer.Services.Interfaces
+@inject IAuthenticationService AuthService
+@inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
+
+<PageTitle>Auto-Login - CoffeeMek S.p.A.</PageTitle>
+
+<div class="container-fluid min-vh-100 d-flex align-items-center justify-content-center" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+    <div class="row justify-content-center w-100">
+        <div class="col-md-6 col-lg-4">
+            <div class="card border-0 shadow-lg">
+                <div class="card-body p-5 text-center">
+                    <div class="mb-4">
+                        <i class="fas fa-coffee fa-4x text-primary mb-3"></i>
+                        <h3 class="fw-bold">CoffeeMek S.p.A.</h3>
+                        <p class="text-muted">🚀 Sistema Auto-Login</p>
+                    </div>
+
+                    @if (isAutoLogging)
+                    {
+                        <div class="mb-4">
+                            <div class="spinner-border text-primary mb-3" role="status">
+                                <span class="visually-hidden">Auto-login...</span>
+                            </div>
+                            <h5 class="text-muted">Accesso automatico in corso...</h5>
+                            <p class="text-muted mb-0">Sistema cloud CoffeeMek</p>
+                        </div>
+                    }
+                    else if (!string.IsNullOrEmpty(errorMessage))
+                    {
+                        <div class="alert alert-danger border-0 mb-4" role="alert">
+                            <i class="fas fa-exclamation-circle me-2"></i>
+                            @errorMessage
+                        </div>
+                        <button class="btn btn-primary btn-lg w-100" @onclick="PerformAutoLogin">
+                            <i class="fas fa-redo me-2"></i>
+                            Riprova Auto-Login
+                        </button>
+                    }
+                    else
+                    {
+                        <!-- Info Utente Predefinito -->
+                        <div class="alert alert-success border-0 mb-4">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-user-check fa-2x me-3"></i>
+                                <div class="text-start">
+                                    <strong>Utente Predefinito:</strong><br>
+                                    <small>
+                                        👤 Admin CoffeeMek<br>
+                                        🌍 Global Administrator<br>
+                                        🏢 Accesso a tutte le sedi<br>
+                                        🕐 Fuso: UTC+1
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button class="btn btn-primary btn-lg w-100 mb-3" @onclick="PerformAutoLogin">
+                            <i class="fas fa-bolt me-2"></i>
+                            🚀 Accesso Automatico Immediato
+                        </button>
+
+                        <div class="alert alert-info border-0 small">
+                            <strong>💡 Come funziona:</strong>
+                            <ul class="mb-0 mt-1 text-start">
+                                <li>Nessuna credenziale richiesta</li>
+                                <li>Utente amministratore preconfigurato</li>
+                                <li>Accesso completo a tutte le funzionalità</li>
+                                <li>Multi-sede: Italia, Brasile, Vietnam</li>
+                            </ul>
+                        </div>
+                    }
+
+                    <!-- Sedi CoffeeMek Info -->
+                    <div class="mt-3">
+                        <small class="text-muted d-block mb-2"><strong>Sedi Produttive CoffeeMek:</strong></small>
+                        <div class="d-flex justify-content-center gap-3">
+                            <span class="badge bg-primary">🇮🇹 Milano</span>
+                            <span class="badge bg-success">🇧🇷 São Paulo</span>
+                            <span class="badge bg-info">🇻🇳 Ho Chi Minh</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private bool isAutoLogging = false;
+    private string errorMessage = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Controlla se già autenticato
+        if (await AuthService.IsAuthenticatedAsync())
+        {
+            Navigation.NavigateTo("/", true);
+            return;
+        }
+
+        // Auto-login immediato all'inizializzazione
+        await PerformAutoLogin();
+    }
+
+    private async Task PerformAutoLogin()
+    {
+        isAutoLogging = true;
+        errorMessage = string.Empty;
+        StateHasChanged();
+
+        try
+        {
+            // Auto-login con utente predefinito (parametri ignorati)
+            var result = await AuthService.LoginAsync("", "");
+            
+            if (result.IsSuccess && result.Data != null)
+            {
+                await JSRuntime.InvokeVoidAsync("alert", 
+                    $"🎉 Accesso automatico riuscito!\n\n" +
+                    $"Benvenuto: {result.Data.User.FirstName}\n" +
+                     $"Sistema: CoffeeMek Cloud Multi-Sede\n" +
+                    $"Accesso: Tutte le sedi produttive");
+                
+                Navigation.NavigateTo("/", true);
+            }
+            else
+            {
+                errorMessage = result.ErrorMessage ?? "Errore sconosciuto nell'auto-login";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Errore auto-login: {ex.Message}";
+        }
+        finally
+        {
+            isAutoLogging = false;
+            StateHasChanged();
+        }
+    }
+}

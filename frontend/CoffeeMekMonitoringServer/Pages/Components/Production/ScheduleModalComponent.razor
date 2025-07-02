@@ -1,0 +1,187 @@
+@using ProductionScheduleModel = CoffeeMekMonitoringServer.Models.ProductionSchedule
+@implements IDisposable
+
+@if (Show && !_disposed)
+{
+    <div class="modal show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title">
+                        <i class="fas fa-@(IsEditMode ? "edit" : "plus") me-2"></i>
+                        @(IsEditMode ? "Modifica Schedulazione CoffeeMek" : "Nuova Schedulazione CoffeeMek")
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" @onclick="HandleCancel"></button>
+                </div>
+                <div class="modal-body">
+                    <EditForm Model="@Schedule" OnValidSubmit="HandleSave">
+                        <DataAnnotationsValidator />
+                        
+                        <!-- Workflow CoffeeMek Info -->
+                        <div class="alert alert-info border-0 mb-3">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-info-circle me-2"></i>
+                                <div>
+                                    <strong>Workflow Produzione CoffeeMek:</strong><br>
+                                    <small>Fresa CNC → Tornio Automatico → Linea Assemblaggio → Linea Test</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Sede Produttiva CoffeeMek *</label>
+                                <!-- CORREZIONE: Usa select normale -->
+                                <select class="form-select" @bind="Schedule.FacilityId">
+                                    <option value="0">Seleziona sede...</option>
+                                    <option value="1">🇮🇹 Milano, Italia</option>
+                                    <option value="2">🇧🇷 São Paulo, Brasile</option>
+                                    <option value="3">🇻🇳 Ho Chi Minh, Vietnam</option>
+                                </select>
+                                <ValidationMessage For="@(() => Schedule.FacilityId)" class="text-danger small" />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Fase Workflow *</label>
+                                <select class="form-select" @bind="Schedule.CurrentPhase">
+                                    <option value="">Seleziona fase...</option>
+                                    <option value="Fresa">🔧 Fresa CNC</option>
+                                    <option value="Tornio">⚙️ Tornio Automatico</option>
+                                    <option value="Assemblaggio">🔩 Linea Assemblaggio</option>
+                                    <option value="Test">🧪 Linea Test</option>
+                                </select>
+                                <ValidationMessage For="@(() => Schedule.CurrentPhase)" class="text-danger small" />
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <label class="form-label">Stato</label>
+                                <select class="form-select" @bind="Schedule.Status">
+                                    <option value="Scheduled">📅 Programmato</option>
+                                    <option value="InProgress">⚡ In Produzione</option>
+                                    <option value="Completed">✅ Completato</option>
+                                    <option value="Delayed">⏰ In Ritardo</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Progresso (%)</label>
+                                <input type="number" class="form-control" @bind="Schedule.Progress" min="0" max="100" />
+                                <ValidationMessage For="@(() => Schedule.Progress)" class="text-danger small" />
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Data Programmata</label>
+                                <input type="date" class="form-control" @bind="scheduledDateInput" />
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-end gap-2">
+                            <button type="button" class="btn btn-secondary" @onclick="HandleCancel">
+                                <i class="fas fa-times me-2"></i>
+                                Annulla
+                            </button>
+                            <button type="submit" class="btn btn-success" disabled="@isSaving">
+                                @if (isSaving)
+                                {
+                                    <span class="spinner-border spinner-border-sm me-2"></span>
+                                    <span>Salvando...</span>
+                                }
+                                else
+                                {
+                                    <i class="fas fa-save me-2"></i>
+                                    <span>Salva Schedulazione</span>
+                                }
+                            </button>
+                        </div>
+                    </EditForm>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private bool _disposed = false;
+    private bool isSaving = false;
+    private DateTime? scheduledDateInput = null;
+
+    [Parameter] public bool Show { get; set; }
+    [Parameter] public ProductionScheduleModel Schedule { get; set; } = new();
+    [Parameter] public bool IsEditMode { get; set; }
+    [Parameter] public EventCallback<ProductionScheduleModel> OnSave { get; set; }
+    [Parameter] public EventCallback OnCancel { get; set; }
+
+    protected override void OnParametersSet()
+    {
+        if (_disposed) return;
+
+        if (!string.IsNullOrEmpty(Schedule?.ScheduledDate))
+        {
+            try
+            {
+                scheduledDateInput = DateTime.Parse(Schedule.ScheduledDate);
+            }
+            catch
+            {
+                scheduledDateInput = DateTime.UtcNow;
+            }
+        }
+        else
+        {
+            scheduledDateInput = DateTime.UtcNow;
+        }
+    }
+
+    private async Task HandleSave()
+    {
+        if (_disposed) return;
+
+        isSaving = true;
+        
+        try
+        {
+            StateHasChanged();
+
+            // Converti data input a string
+            if (scheduledDateInput.HasValue)
+            {
+                Schedule.ScheduledDate = scheduledDateInput.Value.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
+            }
+
+            if (!_disposed)
+            {
+                await OnSave.InvokeAsync(Schedule);
+            }
+        }
+        catch (ObjectDisposedException)
+        {
+            // Ignora se il componente è già stato disposto
+        }
+        finally
+        {
+            if (!_disposed)
+            {
+                isSaving = false;
+                StateHasChanged();
+            }
+        }
+    }
+
+    private async Task HandleCancel()
+    {
+        if (_disposed) return;
+
+        try
+        {
+            await OnCancel.InvokeAsync();
+        }
+        catch (ObjectDisposedException)
+        {
+            // Ignora se il componente è già stato disposto
+        }
+    }
+
+    public void Dispose()
+    {
+        _disposed = true;
+    }
+}

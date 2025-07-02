@@ -1,0 +1,70 @@
+@using CoffeeMekMonitoringServer.Services.Interfaces
+@inject IAuthenticationService AuthenticationService
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JSRuntime
+
+<AuthorizeView>
+    <Authorized>
+        <div class="dropdown">
+            <button class="btn btn-outline-primary dropdown-toggle" 
+                    type="button" 
+                    id="userMenuDropdown" 
+                    data-bs-toggle="dropdown" 
+                    aria-expanded="false">
+                <i class="fas fa-user me-2"></i>
+                @if (currentUser != null)
+                {
+                    <span>@currentUser.FullName</span>
+                }
+                else
+                {
+                    <span>@context.User.Identity?.Name</span>
+                }
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userMenuDropdown">
+                @if (currentUser != null)
+                {
+                    <li>
+                        <h6 class="dropdown-header">
+                            <i class="fas fa-envelope me-2"></i>
+                            @currentUser.Email
+                        </h6>
+                    </li>
+                    <li><hr class="dropdown-divider"></li>
+                }
+                <li>
+                    <button class="dropdown-item text-danger" @onclick="HandleLogout">
+                        <i class="fas fa-sign-out-alt me-2"></i>
+                        Logout
+                    </button>
+                </li>
+            </ul>
+        </div>
+    </Authorized>
+    <NotAuthorized>
+        <a href="/login" class="btn btn-primary">
+            <i class="fas fa-sign-in-alt me-2"></i>
+            Login
+        </a>
+    </NotAuthorized>
+</AuthorizeView>
+
+@code {
+    private User? currentUser;
+
+    protected override async Task OnInitializedAsync()
+    {
+        currentUser = await AuthenticationService.GetCurrentUserAsync();
+    }
+
+    private async Task HandleLogout()
+    {
+        var confirmed = await JSRuntime.InvokeAsync<bool>("confirm", "Sei sicuro di voler uscire?");
+        
+        if (confirmed)
+        {
+            await AuthenticationService.LogoutAsync();
+            NavigationManager.NavigateTo("/login", forceLoad: true);
+        }
+    }
+}
